@@ -5,10 +5,4 @@
   <string name="navigation_drawer_close">Close navigation drawer</string>
 
   <string name="action_settings">Settings</string>
-
-
-  <!--Labels-->
-  <string name="label_listing">List</string>
-  <string name="label_counting">Counting</string>
-  <string name="label_events">Events</string>
 </resources>
