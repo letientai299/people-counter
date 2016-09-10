@@ -1,5 +1,7 @@
 package com.bosch.peoplecounter;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -7,6 +9,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import butterknife.BindView;
@@ -33,12 +37,20 @@ public class MainActivity extends AppCompatActivity {
 
   @Override public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.main, menu);
+    // Associate searchable configuration with the SearchView
+    SearchManager searchManager =
+        (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+    SearchView searchView =
+        (SearchView) menu.findItem(R.id.action_search).getActionView();
+    searchView.setSearchableInfo(
+        searchManager.getSearchableInfo(getComponentName()));
+
     return true;
   }
 
   @Override public boolean onOptionsItemSelected(MenuItem item) {
     final int id = item.getItemId();
-    return id == R.id.action_settings || super.onOptionsItemSelected(item);
+    return id == R.id.action_search || super.onOptionsItemSelected(item);
   }
 
   @Override protected void onDestroy() {
@@ -55,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         new TabPagerAdapter(getSupportFragmentManager(), fragments,
             Arrays.asList("Listing", "Counting", "Events"));
 
+    Toolbar toolbar = ButterKnife.findById(this, R.id.toolbar);
+    setSupportActionBar(toolbar);
     pager.setAdapter(adapter);
     tabs.setupWithViewPager(pager);
   }
