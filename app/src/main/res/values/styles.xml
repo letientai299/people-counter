@@ -18,4 +18,16 @@
 
   <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
+  <style name="PersonCardButton">
+    <item name="android:layout_marginStart">
+      @dimen/person_card_button_horizontal_margin
+    </item>
+    <item name="android:layout_marginLeft">
+      @dimen/person_card_button_horizontal_margin
+    </item>
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">?android:selectableItemBackground</item>
+  </style>
+
 </resources>

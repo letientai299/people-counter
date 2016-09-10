@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
   public void setupViewPager(final ViewPager pager) {
     final List<Fragment> fragments = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
-      fragments.add(initFragment("Fragment " + i));
+      fragments.add(initFragment());
     }
     TabPagerAdapter adapter =
         new TabPagerAdapter(getSupportFragmentManager(), fragments,
@@ -59,12 +59,8 @@ public class MainActivity extends AppCompatActivity {
     tabs.setupWithViewPager(pager);
   }
 
-  private Fragment initFragment(String title) {
-    ListingFragment fragment = new ListingFragment();
-    Bundle bundle = new Bundle();
-    bundle.putString(ListingFragment.KEY_TITTLE, title);
-    fragment.setArguments(bundle);
-    return fragment;
+  private Fragment initFragment() {
+    return new ListingFragment();
   }
 
   private static class TabPagerAdapter extends FragmentPagerAdapter {
