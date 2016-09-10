@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity {
     return id == R.id.action_settings || super.onOptionsItemSelected(item);
   }
 
-  @Override protected void onStop() {
-    super.onStop();
+  @Override protected void onDestroy() {
+    super.onDestroy();
     unbinder.unbind();
   }
 

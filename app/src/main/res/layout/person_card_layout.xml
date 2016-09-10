@@ -28,6 +28,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         >
+
       <TextView
           android:id="@+id/labelPhoneNumberTextView"
           android:layout_width="wrap_content"
@@ -35,11 +36,14 @@
           android:text="@string/label_phone_number"
           android:textColor="@android:color/black"
           />
+
       <TextView
           android:id="@+id/phoneNumberTextView"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_below="@id/labelPhoneNumberTextView"
+          android:autoLink="phone"
+          android:clickable="true"
           tools:text="0163821321"
           />
 

@@ -26,6 +26,6 @@ public class PersonStorage {
   private SecureRandom random = new SecureRandom();
 
   private String randomPhoneNumber() {
-    return new BigInteger(60, random).toString(10);
+    return new BigInteger(40, random).toString(10);
   }
 }

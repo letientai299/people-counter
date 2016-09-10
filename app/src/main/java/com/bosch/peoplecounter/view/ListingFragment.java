@@ -1,5 +1,7 @@
 package com.bosch.peoplecounter.view;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -22,7 +24,8 @@ import javax.inject.Inject;
 /**
  * @author letientai299@gmail.com
  */
-public class ListingFragment extends Fragment {
+public class ListingFragment extends Fragment
+    implements PhoneNumberActionHandler {
   private Unbinder unbinder;
 
   @BindView(R.id.people_list) RecyclerView peopleList;
@@ -49,7 +52,7 @@ public class ListingFragment extends Fragment {
   }
 
   private void setupPeopleList() {
-    adapter = new PersonRecyclerViewAdapter(people);
+    adapter = new PersonRecyclerViewAdapter(people, this);
     peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
     peopleList.setAdapter(adapter);
 
@@ -64,5 +67,17 @@ public class ListingFragment extends Fragment {
   @Override public void onDestroyView() {
     super.onDestroyView();
     unbinder.unbind();
+  }
+
+  @Override public void call(final String number) {
+
+    final Intent intent = new Intent(Intent.ACTION_DIAL);
+    intent.setData(Uri.fromParts("tel", number, null));
+    getActivity().startActivity(intent);
+  }
+
+  @Override public void sms(final String number) {
+    getActivity().startActivity(
+        new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms", number, null)));
   }
 }
