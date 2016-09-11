@@ -19,12 +19,12 @@ import java.util.List;
 class PersonRecyclerViewAdapter
     extends RecyclerView.Adapter<PersonRecyclerViewAdapter.PersonViewHolder> {
   private final List<Person> people;
-  private final PhoneNumberActionHandler phoneActionHandler;
+  private final PersonCardActionHandler actionHandler;
 
   PersonRecyclerViewAdapter(List<Person> people,
-      PhoneNumberActionHandler handler) {
+      PersonCardActionHandler handler) {
     this.people = people;
-    this.phoneActionHandler = handler;
+    this.actionHandler = handler;
   }
 
   @Override public PersonViewHolder onCreateViewHolder(final ViewGroup parent,
@@ -40,9 +40,14 @@ class PersonRecyclerViewAdapter
     holder.nameTextView.setText(person.getName());
     holder.phoneNumberTextView.setText(person.getPhoneNumber());
     holder.phoneButton.setOnClickListener(
-        view -> phoneActionHandler.call(person.getPhoneNumber()));
+        view -> actionHandler.call(person.getPhoneNumber()));
     holder.messageButton.setOnClickListener(
-        view -> phoneActionHandler.sms(person.getPhoneNumber()));
+        view -> actionHandler.sms(person.getPhoneNumber()));
+
+    holder.view.setOnLongClickListener(e -> {
+      actionHandler.openContextMenu(person);
+      return true;
+    });
   }
 
   @Override public int getItemCount() {
@@ -55,10 +60,12 @@ class PersonRecyclerViewAdapter
     @BindView(R.id.phoneButton) ImageButton phoneButton;
     @BindView(R.id.messageButton) ImageButton messageButton;
 
+    private View view;
+
     PersonViewHolder(final View itemView) {
       super(itemView);
+      this.view = itemView;
       ButterKnife.bind(this, itemView);
     }
-
   }
 }

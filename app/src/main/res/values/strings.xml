@@ -19,4 +19,6 @@
   <string name="drawer_tittle_reset_database">Reset database</string>
   <string name="drawer_tittle_gen_fake_data">Gen fake data</string>
   <string name="drawer_tittle_add_new_person">Add new person</string>
+  <string name="remove_this_person">Remove this person</string>
+  <string name="update_person_info">Update person info</string>
 </resources>
