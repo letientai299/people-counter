@@ -55,7 +55,6 @@ public class ListingFragment extends Fragment
     adapter = new PersonRecyclerViewAdapter(people, this);
     peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
     peopleList.setAdapter(adapter);
-
     storage.getPeople().subscribe(this::addCard);
   }
 

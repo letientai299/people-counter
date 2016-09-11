@@ -31,7 +31,6 @@ class PersonRecyclerViewAdapter
       final int viewType) {
     View view = LayoutInflater.from(parent.getContext())
         .inflate(R.layout.person_card_layout, parent, false);
-
     return new PersonViewHolder(view);
   }
 

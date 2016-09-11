@@ -8,6 +8,15 @@
   <string name="label_phone_number">Phone Number</string>
   <string name="make_a_call_to_the_person">Make a call to the person</string>
   <string name="send_message_to_the_person">Send message to the person</string>
-  <string name="search_hint">Type something</string>
-  <string name="search_title">Search</string>
+
+  <string name="tab_title_listing">Listing</string>
+  <string name="tab_title_counting">Counting</string>
+  <string name="tab_title_events">Events</string>
+
+  <string name="drawer_tittle_start_counting">Start counting</string>
+  <string name="drawer_tittle_stop_counting">Stop counting</string>
+  <string name="drawer_tittle_import">Import from Excel…</string>
+  <string name="drawer_tittle_reset_database">Reset database</string>
+  <string name="drawer_tittle_gen_fake_data">Gen fake data</string>
+  <string name="drawer_tittle_add_new_person">Add new person</string>
 </resources>

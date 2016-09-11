@@ -1,31 +1,35 @@
 package com.bosch.peoplecounter;
 
-import android.app.SearchManager;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.ListView;
+import android.widget.Toast;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import com.bosch.peoplecounter.view.ListingFragment;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+    implements AdapterView.OnItemClickListener {
 
   @BindView(R.id.tabs) TabLayout tabs;
+  @BindView(R.id.left_drawer) ListView drawerList;
+  @BindView(R.id.drawer_layout) DrawerLayout drawer;
 
   private Unbinder unbinder;
+  final List<String> tabTitles = new ArrayList<>();
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -33,24 +37,8 @@ public class MainActivity extends AppCompatActivity {
     unbinder = ButterKnife.bind(this);
     ViewPager pager = ButterKnife.findById(this, R.id.pager);
     setupViewPager(pager);
-  }
-
-  @Override public boolean onCreateOptionsMenu(Menu menu) {
-    getMenuInflater().inflate(R.menu.main, menu);
-    // Associate searchable configuration with the SearchView
-    SearchManager searchManager =
-        (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-    SearchView searchView =
-        (SearchView) menu.findItem(R.id.action_search).getActionView();
-    searchView.setSearchableInfo(
-        searchManager.getSearchableInfo(getComponentName()));
-
-    return true;
-  }
-
-  @Override public boolean onOptionsItemSelected(MenuItem item) {
-    final int id = item.getItemId();
-    return id == R.id.action_search || super.onOptionsItemSelected(item);
+    setupDrawer(drawerList);
+    Toast.makeText(this, "Hello world", Toast.LENGTH_SHORT).show();
   }
 
   @Override protected void onDestroy() {
@@ -58,23 +46,78 @@ public class MainActivity extends AppCompatActivity {
     unbinder.unbind();
   }
 
-  public void setupViewPager(final ViewPager pager) {
-    final List<Fragment> fragments = new ArrayList<>();
-    for (int i = 0; i < 3; i++) {
-      fragments.add(initFragment());
-    }
-    TabPagerAdapter adapter =
-        new TabPagerAdapter(getSupportFragmentManager(), fragments,
-            Arrays.asList("Listing", "Counting", "Events"));
+  private TabPagerAdapter tabLayoutAdapter;
 
-    Toolbar toolbar = ButterKnife.findById(this, R.id.toolbar);
-    setSupportActionBar(toolbar);
-    pager.setAdapter(adapter);
+  public void setupViewPager(final ViewPager pager) {
+    tabTitles.add(getString(R.string.tab_title_listing));
+    tabTitles.add(getString(R.string.tab_title_events));
+    final List<Fragment> fragments = new ArrayList<>();
+    fragments.add(initFragment());
+    fragments.add(initFragment());
+    tabLayoutAdapter =
+        new TabPagerAdapter(getSupportFragmentManager(), fragments, tabTitles);
+    pager.setAdapter(tabLayoutAdapter);
     tabs.setupWithViewPager(pager);
   }
 
   private Fragment initFragment() {
     return new ListingFragment();
+  }
+
+  private List<String> drawerActions;
+
+  private BaseAdapter drawerAdapter;
+
+  public void setupDrawer(final ListView drawer) {
+    drawerActions = new ArrayList<>();
+    drawerActions.add(getString(R.string.drawer_tittle_start_counting));
+    drawerActions.add(getString(R.string.drawer_tittle_add_new_person));
+    drawerActions.add(getString(R.string.drawer_tittle_import));
+    drawerActions.add(getString(R.string.drawer_tittle_reset_database));
+    drawerActions.add(getString(R.string.drawer_tittle_gen_fake_data));
+    drawerAdapter =
+        new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
+            drawerActions);
+    drawer.setAdapter(drawerAdapter);
+    drawer.setOnItemClickListener(this);
+  }
+
+  /**
+   * On drawer item clicked.
+   */
+  @Override public void onItemClick(final AdapterView<?> adapterView,
+      final View view, final int i, final long l) {
+    switch (i) {
+      case 0: // counting
+        toggleCountingMode();
+        break;
+      case 1:
+        break;
+      case 2:
+        break;
+      case 3:
+        break;
+      default:
+        // should never happen.
+        break;
+    }
+    drawer.closeDrawers();
+  }
+
+  private boolean isCountingMode = false;
+
+  private void toggleCountingMode() {
+    if (isCountingMode) {
+      tabTitles.set(0, getString(R.string.tab_title_listing));
+      drawerActions.set(0, getString(R.string.drawer_tittle_start_counting));
+    } else {
+      tabTitles.set(0, getString(R.string.tab_title_counting));
+      drawerActions.set(0, getString(R.string.drawer_tittle_stop_counting));
+    }
+
+    isCountingMode = !isCountingMode;
+    tabLayoutAdapter.notifyDataSetChanged();
+    drawerAdapter.notifyDataSetChanged();
   }
 
   private static class TabPagerAdapter extends FragmentPagerAdapter {
