@@ -13,6 +13,8 @@ import javax.inject.Singleton;
 public interface Graph {
   void inject(ListingFragment listingFragment);
 
+  void inject(MainActivity mainActivity);
+
   final class Initializer {
     static Graph init() {
       return DaggerGraph.builder().build();

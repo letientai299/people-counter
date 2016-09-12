@@ -3,6 +3,7 @@ package com.bosch.peoplecounter.data;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.NotNull;
 
 /**
@@ -11,8 +12,12 @@ import org.greenrobot.greendao.annotation.NotNull;
  * @author letientai299@gmail.com
  */
 
-@Entity public class Person {
-  @Id private Long id;
+@Entity(
+    indexes = {
+        @Index(value = "id DESC", unique = true)
+    }) public class Person {
+
+  @Id(autoincrement = true) private Long id;
 
   public void setName(final String name) {
     this.name = name;
@@ -50,5 +55,13 @@ import org.greenrobot.greendao.annotation.NotNull;
 
   public void setId(final Long id) {
     this.id = id;
+  }
+
+  @Override public String toString() {
+    return "Person{" +
+        "id=" + id +
+        ", name='" + name + '\'' +
+        ", phoneNumber='" + phoneNumber + '\'' +
+        '}';
   }
 }

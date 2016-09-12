@@ -21,4 +21,11 @@
   <string name="drawer_tittle_add_new_person">Add new person</string>
   <string name="remove_this_person">Remove this person</string>
   <string name="update_person_info">Update person info</string>
+  <string name="name">Name</string>
+  <string name="label_name">Name</string>
+  <string name="dialog_edit_person_title">Edit person info</string>
+  <string name="ask_for_generate_fake_data">This is not intended to be used by normal user.
+    Are you sure to pollute your database with fake data?</string>
+  <string name="ask_for_reset_database">Are you sure to reset all your database?</string>
+  <string name="ask_for_delete_person">Are you sure to delete this person?</string>
 </resources>

@@ -11,23 +11,32 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import com.bosch.peoplecounter.PeopleCounterApp;
 import com.bosch.peoplecounter.R;
+import com.bosch.peoplecounter.Utils;
 import com.bosch.peoplecounter.data.Person;
 import com.bosch.peoplecounter.data.PersonStorage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+
+import static butterknife.ButterKnife.findById;
 
 /**
  * @author letientai299@gmail.com
  */
 public class ListingFragment extends Fragment
-    implements PersonCardActionHandler {
+    implements PersonCardActionHandler,
+    PersonStorage.StorageChangeListener<Person> {
   private Unbinder unbinder;
 
   @BindView(R.id.people_list) RecyclerView peopleList;
@@ -36,7 +45,7 @@ public class ListingFragment extends Fragment
 
   private final List<Person> people = new ArrayList<>();
 
-  private PersonRecyclerViewAdapter adapter;
+  private PersonRecyclerViewAdapter peopleListAdapter;
 
   public ListingFragment() {
     super();
@@ -49,20 +58,25 @@ public class ListingFragment extends Fragment
     PeopleCounterApp.getInstance().getGraph().inject(this);
     View view = inflater.inflate(R.layout.fragment_listing, container, false);
     unbinder = ButterKnife.bind(this, view);
-    setupPeopleList();
+    peopleListAdapter = new PersonRecyclerViewAdapter(people, this);
+    peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
+    peopleList.setAdapter(peopleListAdapter);
+    storage.addStorageChangeListener(this);
+    updatePeopleList();
     return view;
   }
 
-  private void setupPeopleList() {
-    adapter = new PersonRecyclerViewAdapter(people, this);
-    peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
-    peopleList.setAdapter(adapter);
-    storage.getPeople().subscribe(this::addCard);
+  private void updatePeopleList() {
+    people.clear();
+    storage.getPeople()
+        .flatMap(Observable::from)
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(this::addCard);
   }
 
   private void addCard(final Person p) {
     people.add(p);
-    adapter.notifyDataSetChanged();
+    peopleListAdapter.notifyDataSetChanged();
   }
 
   @Override public void onDestroyView() {
@@ -86,9 +100,91 @@ public class ListingFragment extends Fragment
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     final View view =
         View.inflate(getActivity(), R.layout.dialog_person_context_menu, null);
-    TextView personName = ButterKnife.findById(view, R.id.personNameTextView);
+    TextView personName = findById(view, R.id.personNameTextView);
     personName.setText(p.getName());
+
     builder.setView(view);
-    builder.show();
+    AlertDialog personContextDialog = builder.create();
+
+    ButterKnife.findById(view, R.id.updatePersonInfoButton)
+        .setOnClickListener(v -> {
+          personContextDialog.dismiss();
+          openPersonEditingDialog(p);
+        });
+
+    ButterKnife.findById(view, R.id.removePersonButton)
+        .setOnClickListener(v -> {
+          personContextDialog.dismiss();
+          Utils.askForDoSomething(getActivity(),
+              getString(R.string.ask_for_delete_person), () -> storage.delete(p)
+                  .observeOn(AndroidSchedulers.mainThread())
+                  .subscribe((aVoid) -> {
+                    Toast.makeText(getActivity(), "Deleted", Toast.LENGTH_SHORT)
+                        .show();
+                  }));
+        });
+
+    personContextDialog.show();
+  }
+
+  private void openPersonEditingDialog(Person p) {
+    final View view =
+        View.inflate(getActivity(), R.layout.dialog_person_editing, null);
+    TextView titleTextView = ButterKnife.findById(view, R.id.dialogTitle);
+    titleTextView.setText(R.string.dialog_edit_person_title);
+    EditText nameEditText = ButterKnife.findById(view, R.id.personName);
+    nameEditText.setText(p.getName());
+    EditText phoneNumberEditText = ButterKnife.findById(view, R.id.phoneNumber);
+    phoneNumberEditText.setText(p.getPhoneNumber());
+    new AlertDialog.Builder(getActivity()).setCancelable(false)
+        .setView(view)
+        .setPositiveButton("Save", (dialog, which) -> {
+          final String name =
+              ((TextView) ButterKnife.findById(view, R.id.personName)).getText()
+                  .toString();
+          final String phone = ((TextView) ButterKnife.findById(view,
+              R.id.phoneNumber)).getText().toString();
+          p.setName(name);
+          p.setPhoneNumber(phone);
+          storage.update(p).subscribe(person -> {
+            getActivity().runOnUiThread(
+                () -> Toast.makeText(getActivity(), "Updated",
+                    Toast.LENGTH_SHORT).show());
+          });
+        })
+        .setNegativeButton("Cancel", null)
+        .show();
+  }
+
+  @Override public void onAdd(final Person item) {
+    getActivity().runOnUiThread(() -> addCard(item));
+  }
+
+  @Override public void onDelete(final Person item) {
+    getActivity().runOnUiThread(() -> {
+      people.remove(item);
+      peopleListAdapter.notifyDataSetChanged();
+    });
+  }
+
+  @Override public void onClearAll() {
+    getActivity().runOnUiThread(this::updatePeopleList);
+  }
+
+  @Override public void onUpdate(final Person item) {
+    getActivity().runOnUiThread(() -> {
+      int updatedId = -1;
+      for (int i = 0; i < people.size(); i++) {
+        Person p = people.get(i);
+        if (Objects.equals(p.getId(), item.getId())) {
+          updatedId = i;
+          break;
+        }
+      }
+      if (updatedId != -1) {
+        people.set(updatedId, item);
+      }
+      peopleListAdapter.notifyDataSetChanged();
+    });
   }
 }

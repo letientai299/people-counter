@@ -4,6 +4,7 @@ import android.app.Application;
 import com.bosch.peoplecounter.data.DaoMaster;
 import com.bosch.peoplecounter.data.DaoSession;
 import org.greenrobot.greendao.database.Database;
+import timber.log.Timber;
 
 /**
  * @author letientai299@gmail.com
@@ -15,6 +16,7 @@ public class PeopleCounterApp extends Application {
 
   @Override public void onCreate() {
     super.onCreate();
+    Timber.plant(new Timber.DebugTree());
     instance = this;
     graph = Graph.Initializer.init();
     DaoMaster.DevOpenHelper helper =

@@ -7,19 +7,28 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
+import com.bosch.peoplecounter.data.Person;
+import com.bosch.peoplecounter.data.PersonStorage;
 import com.bosch.peoplecounter.view.ListingFragment;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
+import rx.android.schedulers.AndroidSchedulers;
+
+import static com.bosch.peoplecounter.Utils.askForDoSomething;
 
 public class MainActivity extends AppCompatActivity
     implements AdapterView.OnItemClickListener {
@@ -31,14 +40,16 @@ public class MainActivity extends AppCompatActivity
   private Unbinder unbinder;
   final List<String> tabTitles = new ArrayList<>();
 
+  @Inject PersonStorage storage;
+
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    PeopleCounterApp.getInstance().getGraph().inject(this);
     setContentView(R.layout.activity_main);
     unbinder = ButterKnife.bind(this);
     ViewPager pager = ButterKnife.findById(this, R.id.pager);
     setupViewPager(pager);
     setupDrawer(drawerList);
-    Toast.makeText(this, "Hello world", Toast.LENGTH_SHORT).show();
   }
 
   @Override protected void onDestroy() {
@@ -91,17 +102,56 @@ public class MainActivity extends AppCompatActivity
       case 0: // counting
         toggleCountingMode();
         break;
-      case 1:
+      case 1: // add new person
+        openPersonEditingDialog();
         break;
       case 2:
         break;
-      case 3:
+      case 3: // Reset database
+        askForDoSomething(this, getString(R.string.ask_for_reset_database),
+            this::resetDatabase);
+        break;
+      case 4: // Gen fake data
+        askForDoSomething(this, getString(R.string.ask_for_generate_fake_data),
+            this::genFakeData);
         break;
       default:
         // should never happen.
         break;
     }
     drawer.closeDrawers();
+  }
+
+  private void openPersonEditingDialog() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    View view = View.inflate(this, R.layout.dialog_person_editing, null);
+    TextView titleTextView = ButterKnife.findById(view, R.id.dialogTitle);
+    titleTextView.setText(R.string.drawer_tittle_add_new_person);
+    builder.setView(view);
+    builder.setPositiveButton("OK", (dialog, which) -> {
+      EditText nameEditText = ButterKnife.findById(view, R.id.personName);
+      String name = nameEditText.getText().toString();
+      EditText phoneEditText = ButterKnife.findById(view, R.id.phoneNumber);
+      String number = phoneEditText.getText().toString();
+      Person person = new Person(null, name, number);
+      storage.add(person).observeOn(AndroidSchedulers.mainThread()).
+          subscribe(p -> Toast.makeText(this, "Add \"" + p.getName() + "\'",
+              Toast.LENGTH_SHORT).show());
+    });
+    builder.setNegativeButton("Cancel", null);
+    AlertDialog personEditingDialog = builder.create();
+    personEditingDialog.show();
+  }
+
+  private void resetDatabase() {
+    storage.clear()
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(v -> Toast.makeText(this, "All data has been cleared.",
+            Toast.LENGTH_SHORT).show());
+  }
+
+  private void genFakeData() {
+    storage.gen(10);
   }
 
   private boolean isCountingMode = false;
