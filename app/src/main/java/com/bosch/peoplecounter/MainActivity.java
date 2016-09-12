@@ -22,6 +22,7 @@ import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import com.bosch.peoplecounter.data.Person;
 import com.bosch.peoplecounter.data.PersonStorage;
+import com.bosch.peoplecounter.view.EventsFragment;
 import com.bosch.peoplecounter.view.ListingFragment;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,16 +64,12 @@ public class MainActivity extends AppCompatActivity
     tabTitles.add(getString(R.string.tab_title_listing));
     tabTitles.add(getString(R.string.tab_title_events));
     final List<Fragment> fragments = new ArrayList<>();
-    fragments.add(initFragment());
-    fragments.add(initFragment());
+    fragments.add(new ListingFragment());
+    fragments.add(new EventsFragment());
     tabLayoutAdapter =
         new TabPagerAdapter(getSupportFragmentManager(), fragments, tabTitles);
     pager.setAdapter(tabLayoutAdapter);
     tabs.setupWithViewPager(pager);
-  }
-
-  private Fragment initFragment() {
-    return new ListingFragment();
   }
 
   private List<String> drawerActions;
