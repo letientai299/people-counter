@@ -2,5 +2,10 @@
 <resources>
   <color name="colorPrimary">#3949ab</color>
   <color name="colorPrimaryDark">#1a237e</color>
-  <color name="colorAccent">#2196f3</color>
+  <color name="colorAccent">#212bf3</color>
+
+  <!--Counting theme-->
+  <color name="colorPrimaryCounting">#2e7e15</color>
+  <color name="colorPrimaryDarkCounting">#0f3912</color>
+  <color name="colorAccentCounting">#096c2a</color>
 </resources>

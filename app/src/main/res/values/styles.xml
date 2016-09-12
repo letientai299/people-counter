@@ -13,6 +13,13 @@
     <item name="windowNoTitle">true</item>
   </style>
 
+  <style name="AppTheme.NoActionBarCounting" parent="AppTheme.NoActionBar">
+    <!-- Customize your theme here. -->
+    <item name="colorPrimary">@color/colorPrimaryCounting</item>
+    <item name="colorPrimaryDark">@color/colorPrimaryDarkCounting</item>
+    <item name="colorAccent">@color/colorAccentCounting</item>
+  </style>
+
   <style name="AppTheme.AppBarOverlay"
       parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
 

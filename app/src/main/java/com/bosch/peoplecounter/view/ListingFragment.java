@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -30,6 +31,7 @@ import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
 import static butterknife.ButterKnife.findById;
+import static com.bosch.peoplecounter.R.id.personName;
 
 /**
  * @author letientai299@gmail.com
@@ -46,6 +48,7 @@ public class ListingFragment extends Fragment
   private final List<Person> people = new ArrayList<>();
 
   private PersonRecyclerViewAdapter peopleListAdapter;
+  private boolean isCountingMode;
 
   public ListingFragment() {
     super();
@@ -56,6 +59,7 @@ public class ListingFragment extends Fragment
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     PeopleCounterApp.getInstance().getGraph().inject(this);
+    isCountingMode = getArguments().getBoolean(KEY_MODE);
     View view = inflater.inflate(R.layout.fragment_listing, container, false);
     unbinder = ButterKnife.bind(this, view);
     peopleListAdapter = new PersonRecyclerViewAdapter(people, this);
@@ -68,6 +72,7 @@ public class ListingFragment extends Fragment
 
   private void updatePeopleList() {
     people.clear();
+    peopleListAdapter.notifyDataSetChanged();
     storage.getPeople()
         .flatMap(Observable::from)
         .observeOn(AndroidSchedulers.mainThread())
@@ -100,6 +105,7 @@ public class ListingFragment extends Fragment
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     final View view =
         View.inflate(getActivity(), R.layout.dialog_person_context_menu, null);
+    changeThemeBasedOnMode(ButterKnife.findById(view, R.id.personNameTextView));
     TextView personName = findById(view, R.id.personNameTextView);
     personName.setText(p.getName());
 
@@ -127,12 +133,18 @@ public class ListingFragment extends Fragment
     personContextDialog.show();
   }
 
+  private void changeThemeBasedOnMode(final View view) {
+    view.setBackgroundColor(ContextCompat.getColor(getActivity(),
+        isCountingMode ? R.color.colorPrimaryCounting : R.color.colorPrimary));
+  }
+
   private void openPersonEditingDialog(Person p) {
     final View view =
         View.inflate(getActivity(), R.layout.dialog_person_editing, null);
     TextView titleTextView = ButterKnife.findById(view, R.id.dialogTitle);
+    changeThemeBasedOnMode(titleTextView);
     titleTextView.setText(R.string.dialog_edit_person_title);
-    EditText nameEditText = ButterKnife.findById(view, R.id.personName);
+    EditText nameEditText = ButterKnife.findById(view, personName);
     nameEditText.setText(p.getName());
     EditText phoneNumberEditText = ButterKnife.findById(view, R.id.phoneNumber);
     phoneNumberEditText.setText(p.getPhoneNumber());
@@ -140,7 +152,7 @@ public class ListingFragment extends Fragment
         .setView(view)
         .setPositiveButton("Save", (dialog, which) -> {
           final String name =
-              ((TextView) ButterKnife.findById(view, R.id.personName)).getText()
+              ((TextView) ButterKnife.findById(view, personName)).getText()
                   .toString();
           final String phone = ((TextView) ButterKnife.findById(view,
               R.id.phoneNumber)).getText().toString();
@@ -187,4 +199,6 @@ public class ListingFragment extends Fragment
       peopleListAdapter.notifyDataSetChanged();
     });
   }
+
+  public static final String KEY_MODE = "MODE";
 }

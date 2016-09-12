@@ -1,10 +1,14 @@
 package com.bosch.peoplecounter;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
@@ -34,6 +38,7 @@ import static com.bosch.peoplecounter.Utils.askForDoSomething;
 public class MainActivity extends AppCompatActivity
     implements AdapterView.OnItemClickListener {
 
+  private static final String PREF_THEME = "theme";
   @BindView(R.id.tabs) TabLayout tabs;
   @BindView(R.id.left_drawer) ListView drawerList;
   @BindView(R.id.drawer_layout) DrawerLayout drawer;
@@ -45,6 +50,12 @@ public class MainActivity extends AppCompatActivity
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    isCountingMode = getModeFromPref();
+    if (isCountingMode) {
+      setTheme(R.style.AppTheme_NoActionBarCounting);
+    } else {
+      setTheme(R.style.AppTheme_NoActionBar);
+    }
     PeopleCounterApp.getInstance().getGraph().inject(this);
     setContentView(R.layout.activity_main);
     unbinder = ButterKnife.bind(this);
@@ -58,32 +69,44 @@ public class MainActivity extends AppCompatActivity
     unbinder.unbind();
   }
 
-  private TabPagerAdapter tabLayoutAdapter;
-
   public void setupViewPager(final ViewPager pager) {
-    tabTitles.add(getString(R.string.tab_title_listing));
+    storage.clearStorageChangeListender();
+    if (isCountingMode) {
+      tabTitles.add(getString(R.string.tab_title_counting));
+    } else {
+      tabTitles.add(getString(R.string.tab_title_listing));
+    }
     tabTitles.add(getString(R.string.tab_title_events));
     final List<Fragment> fragments = new ArrayList<>();
-    fragments.add(new ListingFragment());
+    fragments.add(createListingFragment());
     fragments.add(new EventsFragment());
-    tabLayoutAdapter =
+    final TabPagerAdapter tabLayoutAdapter =
         new TabPagerAdapter(getSupportFragmentManager(), fragments, tabTitles);
     pager.setAdapter(tabLayoutAdapter);
     tabs.setupWithViewPager(pager);
   }
 
-  private List<String> drawerActions;
-
-  private BaseAdapter drawerAdapter;
+  @NonNull private ListingFragment createListingFragment() {
+    ListingFragment fragment = new ListingFragment();
+    final Bundle args = new Bundle();
+    args.putBoolean(ListingFragment.KEY_MODE, isCountingMode);
+    fragment.setArguments(args);
+    return fragment;
+  }
 
   public void setupDrawer(final ListView drawer) {
-    drawerActions = new ArrayList<>();
-    drawerActions.add(getString(R.string.drawer_tittle_start_counting));
+    final List<String> drawerActions = new ArrayList<>();
+    if (isCountingMode) {
+      drawerActions.add(getString(R.string.drawer_tittle_stop_counting));
+    } else {
+      drawerActions.add(getString(R.string.drawer_tittle_start_counting));
+    }
+
     drawerActions.add(getString(R.string.drawer_tittle_add_new_person));
     drawerActions.add(getString(R.string.drawer_tittle_import));
     drawerActions.add(getString(R.string.drawer_tittle_reset_database));
     drawerActions.add(getString(R.string.drawer_tittle_gen_fake_data));
-    drawerAdapter =
+    final BaseAdapter drawerAdapter =
         new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
             drawerActions);
     drawer.setAdapter(drawerAdapter);
@@ -95,6 +118,17 @@ public class MainActivity extends AppCompatActivity
    */
   @Override public void onItemClick(final AdapterView<?> adapterView,
       final View view, final int i, final long l) {
+    drawer.closeDrawers();
+    // Only process action when the drawer is closed completely
+    drawer.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+      @Override public void onDrawerClosed(final View drawerView) {
+        processDrawerAction(i);
+        drawer.removeDrawerListener(this);
+      }
+    });
+  }
+
+  private void processDrawerAction(final int i) {
     switch (i) {
       case 0: // counting
         toggleCountingMode();
@@ -116,13 +150,14 @@ public class MainActivity extends AppCompatActivity
         // should never happen.
         break;
     }
-    drawer.closeDrawers();
   }
 
   private void openPersonEditingDialog() {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     View view = View.inflate(this, R.layout.dialog_person_editing, null);
     TextView titleTextView = ButterKnife.findById(view, R.id.dialogTitle);
+    titleTextView.setBackgroundColor(ContextCompat.getColor(this,
+        isCountingMode ? R.color.colorPrimaryCounting : R.color.colorPrimary));
     titleTextView.setText(R.string.drawer_tittle_add_new_person);
     builder.setView(view);
     builder.setPositiveButton("OK", (dialog, which) -> {
@@ -130,10 +165,15 @@ public class MainActivity extends AppCompatActivity
       String name = nameEditText.getText().toString();
       EditText phoneEditText = ButterKnife.findById(view, R.id.phoneNumber);
       String number = phoneEditText.getText().toString();
-      Person person = new Person(null, name, number);
-      storage.add(person).observeOn(AndroidSchedulers.mainThread()).
-          subscribe(p -> Toast.makeText(this, "Add \"" + p.getName() + "\'",
-              Toast.LENGTH_SHORT).show());
+      if (!name.trim().isEmpty()) {
+        Person person = new Person(null, name, number);
+        storage.add(person).observeOn(AndroidSchedulers.mainThread()).
+            subscribe(p -> Toast.makeText(this, "Add \"" + p.getName() + "\'",
+                Toast.LENGTH_SHORT).show());
+      } else {
+        Toast.makeText(this, "Person name cannot be empty. Discard!",
+            Toast.LENGTH_SHORT).show();
+      }
     });
     builder.setNegativeButton("Cancel", null);
     AlertDialog personEditingDialog = builder.create();
@@ -154,17 +194,23 @@ public class MainActivity extends AppCompatActivity
   private boolean isCountingMode = false;
 
   private void toggleCountingMode() {
-    if (isCountingMode) {
-      tabTitles.set(0, getString(R.string.tab_title_listing));
-      drawerActions.set(0, getString(R.string.drawer_tittle_start_counting));
-    } else {
-      tabTitles.set(0, getString(R.string.tab_title_counting));
-      drawerActions.set(0, getString(R.string.drawer_tittle_stop_counting));
-    }
-
     isCountingMode = !isCountingMode;
-    tabLayoutAdapter.notifyDataSetChanged();
-    drawerAdapter.notifyDataSetChanged();
+    updateSharedPrefMode(isCountingMode);
+  }
+
+  private void updateSharedPrefMode(boolean mode) {
+    SharedPreferences sharedPref =
+        this.getSharedPreferences(this.getClass().getSimpleName(),
+            Context.MODE_PRIVATE);
+    sharedPref.edit().putBoolean(PREF_THEME, mode).apply();
+    recreate();
+  }
+
+  public boolean getModeFromPref() {
+    SharedPreferences sharedPref =
+        this.getSharedPreferences(this.getClass().getSimpleName(),
+            Context.MODE_PRIVATE);
+    return sharedPref.getBoolean(PREF_THEME, false);
   }
 
   private static class TabPagerAdapter extends FragmentPagerAdapter {

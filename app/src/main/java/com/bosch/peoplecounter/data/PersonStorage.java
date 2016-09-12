@@ -34,6 +34,10 @@ public class PersonStorage {
     }
   }
 
+  public void clearStorageChangeListender(){
+    this.listeners.clear();
+  }
+
   public Observable<List<Person>> getPeople() {
     return peopleQuery.list();
   }
@@ -50,7 +54,11 @@ public class PersonStorage {
 
   public Observable<Person> add(Person p) {
     Timber.d("Try to insert person: %s", p.toString());
-    return peopleDao.insert(p);
+    return peopleDao.insert(p).doOnCompleted(() -> {
+      for (final StorageChangeListener<Person> listener : listeners) {
+        listener.onAdd(p);
+      }
+    });
   }
 
   public Observable<Void> delete(Person p) {
