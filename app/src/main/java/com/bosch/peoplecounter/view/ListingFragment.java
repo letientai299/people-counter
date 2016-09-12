@@ -1,8 +1,10 @@
 package com.bosch.peoplecounter.view;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -18,6 +20,7 @@ import android.widget.Toast;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
+import com.bosch.peoplecounter.MainActivity;
 import com.bosch.peoplecounter.PeopleCounterApp;
 import com.bosch.peoplecounter.R;
 import com.bosch.peoplecounter.Utils;
@@ -59,7 +62,7 @@ public class ListingFragment extends Fragment
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     PeopleCounterApp.getInstance().getGraph().inject(this);
-    isCountingMode = getArguments().getBoolean(KEY_MODE);
+    isCountingMode = getModeFromPref();
     View view = inflater.inflate(R.layout.fragment_listing, container, false);
     unbinder = ButterKnife.bind(this, view);
     peopleListAdapter = new PersonRecyclerViewAdapter(people, this);
@@ -201,4 +204,11 @@ public class ListingFragment extends Fragment
   }
 
   public static final String KEY_MODE = "MODE";
+
+  public boolean getModeFromPref() {
+    SharedPreferences sharedPref =
+        PreferenceManager.getDefaultSharedPreferences(
+            PeopleCounterApp.getInstance());
+    return sharedPref.getBoolean(MainActivity.PREF_THEME, false);
+  }
 }

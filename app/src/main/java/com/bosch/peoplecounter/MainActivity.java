@@ -1,9 +1,8 @@
 package com.bosch.peoplecounter;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -38,7 +37,7 @@ import static com.bosch.peoplecounter.Utils.askForDoSomething;
 public class MainActivity extends AppCompatActivity
     implements AdapterView.OnItemClickListener {
 
-  private static final String PREF_THEME = "theme";
+  public static final String PREF_THEME = "theme";
   @BindView(R.id.tabs) TabLayout tabs;
   @BindView(R.id.left_drawer) ListView drawerList;
   @BindView(R.id.drawer_layout) DrawerLayout drawer;
@@ -78,20 +77,12 @@ public class MainActivity extends AppCompatActivity
     }
     tabTitles.add(getString(R.string.tab_title_events));
     final List<Fragment> fragments = new ArrayList<>();
-    fragments.add(createListingFragment());
+    fragments.add(new ListingFragment());
     fragments.add(new EventsFragment());
     final TabPagerAdapter tabLayoutAdapter =
         new TabPagerAdapter(getSupportFragmentManager(), fragments, tabTitles);
     pager.setAdapter(tabLayoutAdapter);
     tabs.setupWithViewPager(pager);
-  }
-
-  @NonNull private ListingFragment createListingFragment() {
-    ListingFragment fragment = new ListingFragment();
-    final Bundle args = new Bundle();
-    args.putBoolean(ListingFragment.KEY_MODE, isCountingMode);
-    fragment.setArguments(args);
-    return fragment;
   }
 
   public void setupDrawer(final ListView drawer) {
@@ -195,21 +186,21 @@ public class MainActivity extends AppCompatActivity
 
   private void toggleCountingMode() {
     isCountingMode = !isCountingMode;
-    updateSharedPrefMode(isCountingMode);
+    changeMode(isCountingMode);
   }
 
-  private void updateSharedPrefMode(boolean mode) {
+  private void changeMode(boolean mode) {
     SharedPreferences sharedPref =
-        this.getSharedPreferences(this.getClass().getSimpleName(),
-            Context.MODE_PRIVATE);
+        PreferenceManager.getDefaultSharedPreferences(
+            PeopleCounterApp.getInstance());
     sharedPref.edit().putBoolean(PREF_THEME, mode).apply();
     recreate();
   }
 
   public boolean getModeFromPref() {
     SharedPreferences sharedPref =
-        this.getSharedPreferences(this.getClass().getSimpleName(),
-            Context.MODE_PRIVATE);
+        PreferenceManager.getDefaultSharedPreferences(
+            PeopleCounterApp.getInstance());
     return sharedPref.getBoolean(PREF_THEME, false);
   }
 
