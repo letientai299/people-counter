@@ -13,6 +13,10 @@ android {
     }
   }
 
+  lintOptions {
+    abortOnError false
+  }
+
   compileSdkVersion 24
   buildToolsVersion "24.0.1"
   defaultConfig {
@@ -22,7 +26,7 @@ android {
     versionCode 1
     versionName "1.0"
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-   multiDexEnabled true
+    multiDexEnabled true
   }
   buildTypes {
     release {
