@@ -33,4 +33,6 @@
   <string name="sort_by_name_descending">▼ Sort by name</string>
   <string name="sort_by_status_ascending">▲ Sort by status</string>
   <string name="sort_by_status_descending">▼ Sort by status</string>
+  <string name="empty_data_message">Nothing here.\n Perhaps you want to import from your Excel sheet.</string>
+  <string name="agree_to_use_import">Yes, get me there</string>
 </resources>

@@ -28,6 +28,7 @@ import com.bosch.peoplecounter.R;
 import com.bosch.peoplecounter.Utils;
 import com.bosch.peoplecounter.data.Person;
 import com.bosch.peoplecounter.data.PersonStorage;
+import com.bosch.peoplecounter.data.StorageChangeListener;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,8 +46,7 @@ import static com.bosch.peoplecounter.R.id.personName;
  * @author letientai299@gmail.com
  */
 public class ListingFragment extends Fragment
-    implements PersonCardActionHandler,
-    PersonStorage.StorageChangeListener<Person>,
+    implements PersonCardActionHandler, StorageChangeListener<Person>,
     MaterialSearchBar.OnSearchActionListener, PopupMenu.OnMenuItemClickListener,
     MaterialSearchBarSearchOnTyping.SearchQueryListener {
 
@@ -100,20 +100,22 @@ public class ListingFragment extends Fragment
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     PeopleCounterApp.getInstance().getGraph().inject(this);
-    isCountingMode = getModeFromPref();
-    View view = inflater.inflate(R.layout.fragment_listing, container, false);
-    unbinder = ButterKnife.bind(this, view);
-
-    peopleListAdapter = new PersonRecyclerViewAdapter(people, this);
-    peopleListAdapter.setCountingMode(isCountingMode);
-    peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
-    peopleList.setAdapter(peopleListAdapter);
     storage.addStorageChangeListener(this);
-    updatePeopleList();
+    if (storage.countSync() != 0) {
+      View view = inflater.inflate(R.layout.frag_listing, container, false);
+      isCountingMode = getModeFromPref();
+      unbinder = ButterKnife.bind(this, view);
+      peopleListAdapter = new PersonRecyclerViewAdapter(people, this);
+      peopleListAdapter.setCountingMode(isCountingMode);
+      peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
+      peopleList.setAdapter(peopleListAdapter);
+      updatePeopleList();
 
-    configSearchBar();
-
-    return view;
+      configSearchBar();
+      return view;
+    }
+    unbinder = null;
+    return inflater.inflate(R.layout.frag_empty_data, container, false);
   }
 
   private void configSearchBar() {
@@ -150,11 +152,14 @@ public class ListingFragment extends Fragment
 
   @Override public void onDestroyView() {
     super.onDestroyView();
-    unbinder.unbind();
+    // unbinder can be null if the app is started without any data.
+    if (unbinder != null) unbinder.unbind();
+
     getSharedPref().edit()
         .putBoolean(KEY_SORT_NAME, isAscendingNameOrder)
         .putBoolean(KEY_SORT_STATUS, isAscendingStatusOder)
         .apply();
+    storage.removeStorageChangeListener(this);
   }
 
   @Override public void call(final String number) {
@@ -243,7 +248,12 @@ public class ListingFragment extends Fragment
   }
 
   @Override public void onAdd(final Person item) {
-    getActivity().runOnUiThread(() -> addCard(item));
+    getActivity().runOnUiThread(() -> {
+      if (unbinder == null) {
+        recreate();
+      }
+      addCard(item);
+    });
   }
 
   @Override public void onDelete(final Person item) {
@@ -254,7 +264,15 @@ public class ListingFragment extends Fragment
   }
 
   @Override public void onClearAll() {
-    getActivity().runOnUiThread(this::updatePeopleList);
+    getActivity().runOnUiThread(this::recreate);
+  }
+
+  private void recreate() {
+    getActivity().getSupportFragmentManager()
+        .beginTransaction()
+        .detach(this)
+        .attach(this)
+        .commit();
   }
 
   @Override public void onUpdate(final Person item) {

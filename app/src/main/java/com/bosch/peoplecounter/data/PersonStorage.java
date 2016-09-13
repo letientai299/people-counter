@@ -19,13 +19,12 @@ public class PersonStorage {
   private final RxQuery<Person> peopleQuery;
   private List<StorageChangeListener<Person>> listeners = new ArrayList<>();
 
-  public PersonStorage() {
+  PersonStorage() {
     Timber.d("Init PersonStorage");
     DaoSession daoSession = PeopleCounterApp.getInstance().getDaoSession();
     PersonDao dao = daoSession.getPersonDao();
     peopleDao = dao.rx();
     peopleQuery = dao.queryBuilder().orderAsc(PersonDao.Properties.Name).rx();
-    System.out.println("In db: " + peopleDao.count().toBlocking().last());
   }
 
   public void addStorageChangeListener(StorageChangeListener<Person> listener) {
@@ -34,8 +33,9 @@ public class PersonStorage {
     }
   }
 
-  public void clearStorageChangeListender(){
-    this.listeners.clear();
+  public void removeStorageChangeListener(
+      StorageChangeListener<Person> listener) {
+    if (listener != null) this.listeners.remove(listener);
   }
 
   public Observable<List<Person>> getPeople() {
@@ -65,6 +65,12 @@ public class PersonStorage {
     return peopleDao.delete(p).doOnCompleted(() -> {
       for (final StorageChangeListener<Person> listener : listeners) {
         listener.onDelete(p);
+      }
+
+      if (countSync() == 0) {
+        for (final StorageChangeListener<Person> listener : listeners) {
+          listener.onClearAll();
+        }
       }
     });
   }
@@ -102,14 +108,8 @@ public class PersonStorage {
     });
   }
 
-  public interface StorageChangeListener<T> {
-    void onAdd(T item);
-
-    void onDelete(T item);
-
-    void onClearAll();
-
-    void onUpdate(T item);
+  public long countSync() {
+    return peopleDao.count().toBlocking().last();
   }
 }
 

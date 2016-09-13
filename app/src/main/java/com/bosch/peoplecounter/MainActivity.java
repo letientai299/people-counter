@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity
   @BindView(R.id.drawer_layout) DrawerLayout drawer;
 
   private Unbinder unbinder;
-  final List<String> tabTitles = new ArrayList<>();
+  private final List<String> tabTitles = new ArrayList<>();
 
   @Inject PersonStorage storage;
 
@@ -69,13 +69,13 @@ public class MainActivity extends AppCompatActivity
   }
 
   public void setupViewPager(final ViewPager pager) {
-    storage.clearStorageChangeListender();
     if (isCountingMode) {
       tabTitles.add(getString(R.string.tab_title_counting));
     } else {
       tabTitles.add(getString(R.string.tab_title_listing));
     }
     tabTitles.add(getString(R.string.tab_title_events));
+
     final List<Fragment> fragments = new ArrayList<>();
     fragments.add(new ListingFragment());
     fragments.add(new EventsFragment());
