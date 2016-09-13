@@ -27,6 +27,7 @@ import com.bosch.peoplecounter.Utils;
 import com.bosch.peoplecounter.data.Person;
 import com.bosch.peoplecounter.data.PersonStorage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
@@ -48,8 +49,18 @@ public class ListingFragment extends Fragment
 
   @Inject PersonStorage storage;
 
-  private final List<Person> people = new ArrayList<>();
-
+  /**
+   * Make the people list auto sorted by person name.
+   */
+  private final List<Person> people = new ArrayList<Person>() {
+    public boolean add(Person mt) {
+      int index = Collections.binarySearch(this, mt,
+          (o1, o2) -> o1.getName().compareTo(o2.getName()));
+      if (index < 0) index = ~index;
+      super.add(index, mt);
+      return true;
+    }
+  };
   private PersonRecyclerViewAdapter peopleListAdapter;
   private boolean isCountingMode;
 
@@ -197,13 +208,12 @@ public class ListingFragment extends Fragment
         }
       }
       if (updatedId != -1) {
-        people.set(updatedId, item);
+        people.remove(updatedId);
+        people.add(item);
+        peopleListAdapter.notifyDataSetChanged();
       }
-      peopleListAdapter.notifyDataSetChanged();
     });
   }
-
-  public static final String KEY_MODE = "MODE";
 
   public boolean getModeFromPref() {
     SharedPreferences sharedPref =
