@@ -204,6 +204,7 @@ public class ListingFragment extends Fragment
   @Override public void toggleCheck(final Person p) {
     p.setChecked(!p.isChecked());
     storage.update(p).subscribe();
+    updatePeopleListOrder();
   }
 
   private void changeThemeBasedOnMode(final View view) {
@@ -317,8 +318,7 @@ public class ListingFragment extends Fragment
   }
 
   private void updatePeopleListOrder() {
-    Collections.sort(people, personComparator);
-    peopleListAdapter.notifyDataSetChanged();
+    peopleListAdapter.reorder(personComparator);
   }
 
   private void updateSortStatusMenuItemTitle(final MenuItem item) {

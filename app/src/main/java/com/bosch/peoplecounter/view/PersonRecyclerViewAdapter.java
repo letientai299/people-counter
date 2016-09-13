@@ -12,6 +12,8 @@ import butterknife.ButterKnife;
 import com.bosch.peoplecounter.R;
 import com.bosch.peoplecounter.data.Person;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static android.view.View.GONE;
@@ -120,5 +122,11 @@ class PersonRecyclerViewAdapter
       this.view = itemView;
       ButterKnife.bind(this, itemView);
     }
+  }
+
+  void reorder(Comparator<Person> comparator) {
+    Collections.sort(people, comparator);
+    updateFilteringPeople();
+    this.notifyDataSetChanged();
   }
 }
