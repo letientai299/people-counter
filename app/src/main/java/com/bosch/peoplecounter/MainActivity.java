@@ -41,15 +41,14 @@ public class MainActivity extends AppCompatActivity
     implements AdapterView.OnItemClickListener {
 
   public static final String PREF_THEME = "theme";
+  private final List<String> tabTitles = new ArrayList<>();
   @BindView(R.id.tabs) TabLayout tabs;
   @BindView(R.id.left_drawer) ListView drawerList;
   @BindView(R.id.drawer_layout) DrawerLayout drawer;
-
+  @Inject PersonStorage storage;
   private Unbinder unbinder;
   private List<Fragment> pages;
-  private final List<String> tabTitles = new ArrayList<>();
-
-  @Inject PersonStorage storage;
+  private boolean isCountingMode = false;
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -170,7 +169,8 @@ public class MainActivity extends AppCompatActivity
             subscribe(p -> {
               Toast.makeText(this, "Add \"" + p.getName() + "\'",
                   Toast.LENGTH_SHORT).show();
-              reloadListingFragment();
+              // Reload if that is a first person in database
+              if (storage.countSync() == 1) reloadListingFragment();
             });
       } else {
         Toast.makeText(this, "Person name cannot be empty. Discard!",
@@ -197,8 +197,6 @@ public class MainActivity extends AppCompatActivity
     storage.gen(10);
   }
 
-  private boolean isCountingMode = false;
-
   private void toggleCountingMode() {
     isCountingMode = !isCountingMode;
     changeMode(isCountingMode);
@@ -217,6 +215,27 @@ public class MainActivity extends AppCompatActivity
         PreferenceManager.getDefaultSharedPreferences(
             PeopleCounterApp.getInstance());
     return sharedPref.getBoolean(PREF_THEME, false);
+  }
+
+  @Override
+  public void onActivityResult(final int requestCode, final int resultCode,
+      final Intent data) {
+    if (requestCode == Utils.CODE_FILE_PICKER && resultCode == RESULT_OK) {
+      Uri uri = data.getData();
+      Utils.parseExcel(uri)
+          .observeOn(Schedulers.newThread())
+          .subscribe(p -> storage.add(p).subscribe(),
+              error -> runOnUiThread(() -> {
+                Toast.makeText(this,
+                    "Error during parsing Excel file: " + error.getMessage(),
+                    Toast.LENGTH_LONG).show();
+                error.printStackTrace();
+              }), this::reloadListingFragment);
+
+      return;
+    }
+
+    super.onActivityResult(requestCode, resultCode, data);
   }
 
   private static class TabPagerAdapter extends FragmentPagerAdapter {
@@ -242,26 +261,5 @@ public class MainActivity extends AppCompatActivity
       if (titles.size() > position) return titles.get(position);
       return "Fragment #" + position;
     }
-  }
-
-  @Override
-  public void onActivityResult(final int requestCode, final int resultCode,
-      final Intent data) {
-    if (requestCode == Utils.CODE_FILE_PICKER && resultCode == RESULT_OK) {
-      Uri uri = data.getData();
-      Utils.parseExcel(uri)
-          .observeOn(Schedulers.newThread())
-          .subscribe(p -> storage.add(p).subscribe(), error -> runOnUiThread(
-              () -> {
-                Toast.makeText(this,
-                    "Error during parsing Excel file: " + error.getMessage(),
-                    Toast.LENGTH_LONG).show();
-                error.printStackTrace();
-              }), this::reloadListingFragment);
-
-      return;
-    }
-
-    super.onActivityResult(requestCode, resultCode, data);
   }
 }

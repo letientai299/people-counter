@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -16,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,8 +35,9 @@ import com.mancj.materialsearchbar.MaterialSearchBar;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import javax.inject.Inject;
+import jp.wasabeef.recyclerview.animators.BaseItemAnimator;
+import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -49,30 +52,18 @@ public class ListingFragment extends Fragment
     MaterialSearchBar.OnSearchActionListener, PopupMenu.OnMenuItemClickListener,
     MaterialSearchBarSearchOnTyping.SearchQueryListener {
 
+  public static final int ANIMATION_DURATION = 500;
   private static final String KEY_SORT_NAME =
       ListingFragment.class.getSimpleName() + "/sortByName";
   private static final String KEY_SORT_STATUS =
       ListingFragment.class.getSimpleName() + "/sortByStatus";
-
-  private Unbinder unbinder;
-
-  @BindView(R.id.people_list) RecyclerView peopleList;
-  @BindView(R.id.searchBar) MaterialSearchBarSearchOnTyping searchBar;
-
-  @Inject PersonStorage storage;
-
   /**
    * Make the people list auto sorted by person name.
    */
-  private final List<Person> people = new ArrayList<Person>() {
-    public boolean add(Person mt) {
-      int index = Collections.binarySearch(this, mt, personComparator);
-      if (index < 0) index = ~index;
-      super.add(index, mt);
-      return true;
-    }
-  };
-
+  @BindView(R.id.people_list) RecyclerView peopleList;
+  @BindView(R.id.searchBar) MaterialSearchBarSearchOnTyping searchBar;
+  @Inject PersonStorage storage;
+  private Unbinder unbinder;
   private boolean isCountingMode;
   private boolean isAscendingStatusOder;
   private boolean isAscendingNameOrder;
@@ -90,7 +81,7 @@ public class ListingFragment extends Fragment
     if (isAscendingNameOrder) compareName = -compareName;
     return compareName;
   };
-
+  private final SortedList people = new SortedList(personComparator);
   private PersonRecyclerViewAdapter peopleListAdapter;
 
   public ListingFragment() {
@@ -108,8 +99,17 @@ public class ListingFragment extends Fragment
       unbinder = ButterKnife.bind(this, view);
       peopleListAdapter = new PersonRecyclerViewAdapter(people, this);
       peopleListAdapter.setCountingMode(isCountingMode);
+
       peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
+      OvershootInterpolator interpolator = new OvershootInterpolator(1f);
+      BaseItemAnimator animator = new SlideInUpAnimator(interpolator);
+      peopleList.setItemAnimator(animator);
+      peopleList.getItemAnimator().setAddDuration(ANIMATION_DURATION);
+      peopleList.getItemAnimator().setRemoveDuration(ANIMATION_DURATION);
+      peopleList.getItemAnimator().setMoveDuration(ANIMATION_DURATION);
+      peopleList.getItemAnimator().setChangeDuration(ANIMATION_DURATION);
       peopleList.setAdapter(peopleListAdapter);
+
       updatePeopleList();
 
       configSearchBar();
@@ -153,15 +153,19 @@ public class ListingFragment extends Fragment
   private void updatePeopleList() {
     people.clear();
     peopleListAdapter.notifyDataSetChanged();
-    storage.getPeople()
+    final Handler handler = new Handler();
+    handler.postDelayed(() -> storage.getPeople()
         .flatMap(Observable::from)
         .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(this::addCard);
+        .subscribe(ListingFragment.this::addCard), 300);
   }
 
   private void addCard(final Person p) {
-    people.add(p);
-    peopleListAdapter.notifyDataSetChanged();
+    int index = people.binaryInsert(p);
+    if (index != -1) {
+      //peopleListAdapter.notifyDataSetChanged();
+      peopleListAdapter.notifyItemInserted(index);
+    }
   }
 
   @Override public void onStop() {
@@ -374,6 +378,25 @@ public class ListingFragment extends Fragment
       peopleListAdapter.setFilterQuery(query);
       peopleListAdapter.notifyDataSetChanged();
     });
+  }
+
+  static class SortedList extends ArrayList<Person> {
+    private final Comparator<Person> comparator;
+
+    SortedList(Comparator<Person> comp) {
+      this.comparator = comp;
+    }
+
+    @Override public boolean add(final Person o) {
+      return binaryInsert(o) != -1;
+    }
+
+    int binaryInsert(Person p) {
+      int index = Collections.binarySearch(this, p, comparator);
+      if (index < 0) index = ~index;
+      super.add(index, p);
+      return index;
+    }
   }
 }
 

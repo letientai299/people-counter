@@ -70,4 +70,6 @@ dependencies {
   // Search view
   compile 'com.github.mancj:MaterialSearchBar:0.3.1'
   compile 'com.android.support:multidex:1.0.1'
+  // animation
+  compile 'jp.wasabeef:recyclerview-animators:2.2.4'
 }
