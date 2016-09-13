@@ -14,6 +14,8 @@
 
   <LinearLayout
       android:layout_width="match_parent"
+      android:paddingStart="@dimen/activity_vertical_margin"
+      android:paddingEnd="@dimen/activity_vertical_margin"
       android:layout_height="wrap_content"
       >
 
@@ -21,7 +23,6 @@
         android:id="@+id/personCheckedIcon"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:contentDescription="@string/checked"
         android:src="@drawable/ic_check_circle_green_700_48dp"
         />
@@ -31,7 +32,6 @@
         android:layout_height="wrap_content"
         android:background="?android:selectableItemBackground"
         android:orientation="vertical"
-        android:padding="@dimen/card_padding"
         >
 
       <TextView

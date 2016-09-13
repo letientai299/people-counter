@@ -1,17 +1,72 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /home/letientai299/Software/Installed/Android/sdk/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+-keepattributes EnclosingMethod
+-keep class java.lang.** {*;}
 
-# Add any project specific keep options here:
+# ButterKnife
+# Retain generated class which implement Unbinder.
+-keep public class * implements butterknife.Unbinder { public <init>(...); }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Prevent obfuscation of types which use ButterKnife annotations since the simple name
+# is used to reflectively look up the generated ViewBinding.
+-keep class butterknife.*
+-keepclasseswithmembernames class * { @butterknife.* <methods>; }
+-keepclasseswithmembernames class * { @butterknife.* <fields>; }
+
+#Rx
+-keep class rx.** {*;}
+-keep class rx.schedulers.** {*;}
+-dontnote rx.**
+-keepclassmembers class rx.internal.util.unsafe.*ArrayQueue*Field* {
+    long producerIndex;
+    long consumerIndex;
+}
+-keepclassmembers class rx.internal.util.unsafe.BaseLinkedQueueProducerNodeRef {
+    rx.internal.util.atomic.LinkedQueueNode producerNode;
+}
+-keepclassmembers class rx.internal.util.unsafe.BaseLinkedQueueConsumerNodeRef {
+    rx.internal.util.atomic.LinkedQueueNode consumerNode;
+}
+
+
+
+# GreenDAO
+
+-keepclassmembers class * extends org.greenrobot.greendao.AbstractDao {
+    public static java.lang.String TABLENAME;
+}
+-keep class **$Properties
+-keep class net.sqlcipher.database.** {*;}
+
+
+# For photo view
+-keep public class uk.co.senab.** {*;}
+
+# For apache poi
+-keep class org.apache.** {*;}
+-dontwarn org.apache.**
+
+-keep public class schemasMicrosoftComVml.** {*;}
+-dontwarn schemasMicrosoftComVml.**
+
+-keep public class schemasMicrosoftComOfficeOffice.** {*;}
+-dontwarn schemasMicrosoftComOfficeOffice.**
+
+-keep public class schemasMicrosoftComOfficeExcel.** {*;}
+-dontwarn schemasMicrosoftComOfficeExcel.**
+
+-keep class com.bea.** {*;}
+-keep class org.w3.** {*;}
+-keep class org.etsi.** {*;}
+-dontwarn org.**
+-dontwarn com.microsoft.**
+
+-keep class org.openxmlformats.** {*;}
+
+-dontwarn org.openxmlformats.**
+-keep public class aavax.xml.** {*;}
+
+-dontnote org.apache.**
+-dontnote schemasMicrosoftComVml.**
+
+
+# Retrolambda
+-dontwarn java.lang.invoke.*

@@ -1,10 +1,11 @@
 package com.bosch.peoplecounter;
 
 import android.app.Application;
+import android.content.Context;
+import android.support.multidex.MultiDex;
 import com.bosch.peoplecounter.data.DaoMaster;
 import com.bosch.peoplecounter.data.DaoSession;
 import org.greenrobot.greendao.database.Database;
-import timber.log.Timber;
 
 /**
  * @author letientai299@gmail.com
@@ -14,9 +15,13 @@ public class PeopleCounterApp extends Application {
   private Graph graph;
   private DaoSession daoSession;
 
+  @Override protected void attachBaseContext(final Context base) {
+    super.attachBaseContext(base);
+    MultiDex.install(this);
+  }
+
   @Override public void onCreate() {
     super.onCreate();
-    Timber.plant(new Timber.DebugTree());
     instance = this;
     graph = Graph.Initializer.init();
     DaoMaster.DevOpenHelper helper =

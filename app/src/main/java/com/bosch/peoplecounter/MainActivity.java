@@ -165,6 +165,7 @@ public class MainActivity extends AppCompatActivity
             subscribe(p -> {
               Toast.makeText(this, "Add \"" + p.getName() + "\'",
                   Toast.LENGTH_SHORT).show();
+              reloadListingFragment();
             });
       } else {
         Toast.makeText(this, "Person name cannot be empty. Discard!",
@@ -174,6 +175,10 @@ public class MainActivity extends AppCompatActivity
     builder.setNegativeButton("Cancel", null);
     AlertDialog personEditingDialog = builder.create();
     personEditingDialog.show();
+  }
+
+  private void reloadListingFragment() {
+    Utils.recreateFragment(pages.get(0));
   }
 
   private void resetDatabase() {
@@ -241,13 +246,12 @@ public class MainActivity extends AppCompatActivity
       Uri uri = data.getData();
       Utils.parseExcel(uri)
           .subscribe(p -> storage.add(p).subscribe(), error -> runOnUiThread(
-              () -> Toast.makeText(this,
-                  "Error during parsing Excel file: " + error.getMessage(),
-                  Toast.LENGTH_LONG).show()),
               () -> {
-                // restart the list fragment when complete
-                Utils.recreateFragment(pages.get(0));
-              });
+                Toast.makeText(this,
+                    "Error during parsing Excel file: " + error.getMessage(),
+                    Toast.LENGTH_LONG).show();
+                error.printStackTrace();
+              }), this::reloadListingFragment);
 
       return;
     }

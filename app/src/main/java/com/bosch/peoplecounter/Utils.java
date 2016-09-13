@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AlertDialog;
@@ -40,8 +41,18 @@ public class Utils {
    */
   public static void startFilePickerIntent(Activity activity, String[] types) {
     Intent intent = new Intent();
-    intent.setType("*/*");
-    intent.putExtra(Intent.EXTRA_MIME_TYPES, types);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      intent.setType("*/*");
+      intent.putExtra(Intent.EXTRA_MIME_TYPES, types);
+    } else {
+      StringBuilder sb = new StringBuilder();
+      for (final String type : types) {
+        sb.append(type);
+        sb.append(",");
+      }
+      sb.deleteCharAt(sb.length() - 1);
+      intent.setType(sb.toString());
+    }
     intent.setAction(Intent.ACTION_GET_CONTENT);
     activity.startActivityForResult(Intent.createChooser(intent, "Choose file"),
         CODE_FILE_PICKER);
@@ -67,14 +78,6 @@ public class Utils {
         subscriber.onCompleted();
       } catch (IOException ioe) {
         subscriber.onError(ioe);
-      } finally {
-        if (wb != null) {
-          try {
-            wb.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
       }
     });
   }

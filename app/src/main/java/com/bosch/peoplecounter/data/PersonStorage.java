@@ -8,7 +8,6 @@ import java.util.List;
 import org.greenrobot.greendao.rx.RxDao;
 import org.greenrobot.greendao.rx.RxQuery;
 import rx.Observable;
-import timber.log.Timber;
 
 /**
  * @author letientai299@gmail.com
@@ -52,7 +51,6 @@ public class PersonStorage {
   }
 
   public Observable<Person> add(Person p) {
-    Timber.d("Try to insert person: %s", p.toString());
     return peopleDao.insert(p).doOnCompleted(() -> {
       for (final StorageChangeListener<Person> listener : listeners) {
         listener.onAdd(p);

@@ -131,8 +131,8 @@ public class ListingFragment extends Fragment
   }
 
   private void configSearchBar() {
-    isAscendingStatusOder = getSharedPref().getBoolean(KEY_SORT_STATUS, true);
-    isAscendingNameOrder = getSharedPref().getBoolean(KEY_SORT_NAME, true);
+    isAscendingStatusOder = getSharedPref().getBoolean(KEY_SORT_STATUS, false);
+    isAscendingNameOrder = getSharedPref().getBoolean(KEY_SORT_NAME, false);
 
     searchBar.setOnSearchActionListener(this);
     searchBar.setQueryListener(this);
@@ -350,15 +350,16 @@ public class ListingFragment extends Fragment
 
   private void updateSortStatusMenuItemTitle(final MenuItem item) {
     String title =
-        isAscendingStatusOder ? getString(R.string.sort_by_status_ascending)
-            : getString(R.string.sort_by_status_descending);
+        isAscendingStatusOder ? getString(R.string.sort_by_status_descending)
+            : getString(R.string.sort_by_status_ascending);
     item.setTitle(title);
   }
 
   private void updateSortNameMenuItemTitle(final MenuItem item) {
     String title =
-        isAscendingNameOrder ? getString(R.string.sort_by_name_ascending)
-            : getString(R.string.sort_by_name_descending);
+        isAscendingNameOrder ? getString(R.string.sort_by_name_descending)
+            : getString(R.string.sort_by_name_ascending);
+
     item.setTitle(title);
   }
 

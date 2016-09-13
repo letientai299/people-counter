@@ -71,7 +71,11 @@ class PersonRecyclerViewAdapter
       final int position) {
     Person person = getPeopleList().get(position);
     holder.nameTextView.setText(person.getName());
-    holder.phoneNumberTextView.setText(person.getPhoneNumber());
+    if (!person.getPhoneNumber().isEmpty()) {
+      holder.phoneNumberTextView.setText(person.getPhoneNumber());
+    } else {
+      holder.phoneNumberTextView.setText("Missing");
+    }
     holder.phoneButton.setOnClickListener(
         view -> actionHandler.call(person.getPhoneNumber()));
     holder.messageButton.setOnClickListener(
