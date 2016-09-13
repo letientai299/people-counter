@@ -11,7 +11,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import com.bosch.peoplecounter.R;
 import com.bosch.peoplecounter.data.Person;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static android.view.View.GONE;
 
@@ -22,15 +24,33 @@ import static android.view.View.GONE;
 class PersonRecyclerViewAdapter
     extends RecyclerView.Adapter<PersonRecyclerViewAdapter.PersonViewHolder> {
   private final List<Person> people;
+  private final List<Person> filteringPeople = new ArrayList<>();
   private final PersonCardActionHandler actionHandler;
   private boolean isCountingMode = false;
+  private boolean filterEnable = false;
+  private String filterQuery = "";
 
-  public boolean isCountingMode() {
-    return isCountingMode;
+  void setCountingMode(final boolean countingMode) {
+    isCountingMode = countingMode;
   }
 
-  public void setCountingMode(final boolean countingMode) {
-    isCountingMode = countingMode;
+  void setFilterEnable(final boolean filterMode) {
+    this.filterEnable = filterMode;
+    if (filterEnable) {
+      updateFilteringPeople();
+    }
+  }
+
+  private void updateFilteringPeople() {
+    filteringPeople.clear();
+    for (int i = 0; i < people.size(); i++) {
+      if (personMatchQuery(people.get(i))) filteringPeople.add(people.get(i));
+    }
+  }
+
+  void setFilterQuery(String query) {
+    this.filterQuery = query;
+    updateFilteringPeople();
   }
 
   PersonRecyclerViewAdapter(List<Person> people,
@@ -48,7 +68,7 @@ class PersonRecyclerViewAdapter
 
   @Override public void onBindViewHolder(final PersonViewHolder holder,
       final int position) {
-    Person person = people.get(position);
+    Person person = getPeopleList().get(position);
     holder.nameTextView.setText(person.getName());
     holder.phoneNumberTextView.setText(person.getPhoneNumber());
     holder.phoneButton.setOnClickListener(
@@ -63,10 +83,7 @@ class PersonRecyclerViewAdapter
 
     // Only enable toggle action in counting mode
     if (isCountingMode) {
-      holder.view.setOnClickListener(v -> {
-        actionHandler.toggleCheck(person);
-      });
-
+      holder.view.setOnClickListener(v -> actionHandler.toggleCheck(person));
       int checkedIconResource =
           person.isChecked() ? R.drawable.ic_check_circle_green_700_48dp
               : R.drawable.ic_check_circle_grey_700_48dp;
@@ -76,8 +93,19 @@ class PersonRecyclerViewAdapter
     }
   }
 
+  private boolean personMatchQuery(final Person person) {
+    Pattern pattern = Pattern.compile(filterQuery);
+    return pattern.matcher(person.getName()).find() || pattern.matcher(
+        person.getPhoneNumber()).find();
+  }
+
   @Override public int getItemCount() {
-    return people.size();
+    return getPeopleList().size();
+  }
+
+  private List<Person> getPeopleList() {
+    if (filterEnable) return filteringPeople;
+    return people;
   }
 
   static class PersonViewHolder extends RecyclerView.ViewHolder {

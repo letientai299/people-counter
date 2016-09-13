@@ -37,7 +37,6 @@ import java.util.Objects;
 import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
-import timber.log.Timber;
 
 import static butterknife.ButterKnife.findById;
 import static com.bosch.peoplecounter.R.id.personName;
@@ -286,7 +285,7 @@ public class ListingFragment extends Fragment
   }
 
   @Override public void onSearchStateChanged(final boolean state) {
-    // ignore
+    peopleListAdapter.setFilterEnable(state);
   }
 
   @Override public void onSearchConfirmed(final CharSequence query) {
@@ -341,6 +340,9 @@ public class ListingFragment extends Fragment
   }
 
   private void filterPeopleList(final String query) {
-    Timber.d("Search Query updated: %s", query);
+    getActivity().runOnUiThread(() -> {
+      peopleListAdapter.setFilterQuery(query);
+      peopleListAdapter.notifyDataSetChanged();
+    });
   }
 }
