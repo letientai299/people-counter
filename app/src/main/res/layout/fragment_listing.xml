@@ -7,7 +7,7 @@
     android:orientation="vertical"
     >
 
-  <com.mancj.materialsearchbar.MaterialSearchBar
+  <com.bosch.peoplecounter.view.MaterialSearchBarSearchOnTyping
       android:id="@+id/searchBar"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"

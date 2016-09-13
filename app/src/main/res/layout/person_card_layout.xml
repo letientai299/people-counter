@@ -20,6 +20,7 @@
         android:id="@+id/personCheckedIcon"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:contentDescription="@string/checked"
         android:src="@drawable/ic_check_circle_green_700_48dp"
         />

@@ -37,6 +37,7 @@ import java.util.Objects;
 import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
+import timber.log.Timber;
 
 import static butterknife.ButterKnife.findById;
 import static com.bosch.peoplecounter.R.id.personName;
@@ -47,8 +48,8 @@ import static com.bosch.peoplecounter.R.id.personName;
 public class ListingFragment extends Fragment
     implements PersonCardActionHandler,
     PersonStorage.StorageChangeListener<Person>,
-    MaterialSearchBar.OnSearchActionListener,
-    PopupMenu.OnMenuItemClickListener {
+    MaterialSearchBar.OnSearchActionListener, PopupMenu.OnMenuItemClickListener,
+    MaterialSearchBarSearchOnTyping.SearchQueryListener {
 
   private static final String KEY_SORT_NAME =
       ListingFragment.class.getSimpleName() + "/sortByName";
@@ -58,7 +59,7 @@ public class ListingFragment extends Fragment
   private Unbinder unbinder;
 
   @BindView(R.id.people_list) RecyclerView peopleList;
-  @BindView(R.id.searchBar) MaterialSearchBar searchBar;
+  @BindView(R.id.searchBar) MaterialSearchBarSearchOnTyping searchBar;
 
   @Inject PersonStorage storage;
 
@@ -117,10 +118,12 @@ public class ListingFragment extends Fragment
   }
 
   private void configSearchBar() {
-    isAscendingStatusOder = getSharedPref().getBoolean(KEY_SORT_STATUS, false);
-    isAscendingNameOrder = getSharedPref().getBoolean(KEY_SORT_NAME, false);
+    isAscendingStatusOder = getSharedPref().getBoolean(KEY_SORT_STATUS, true);
+    isAscendingNameOrder = getSharedPref().getBoolean(KEY_SORT_NAME, true);
 
     searchBar.setOnSearchActionListener(this);
+    searchBar.setQueryListener(this);
+
     searchBar.inflateMenu(R.menu.sorting);
     PopupMenu menu = searchBar.getMenu();
     menu.setOnMenuItemClickListener(this);
@@ -283,15 +286,15 @@ public class ListingFragment extends Fragment
   }
 
   @Override public void onSearchStateChanged(final boolean state) {
-    System.out.println(state);
+    // ignore
   }
 
   @Override public void onSearchConfirmed(final CharSequence query) {
-    System.out.println(query);
+    filterPeopleList(query.toString());
   }
 
   @Override public void onButtonClicked(final int i) {
-
+    // ignore
   }
 
   @Override public boolean onMenuItemClick(final MenuItem item) {
@@ -331,5 +334,13 @@ public class ListingFragment extends Fragment
         isAscendingNameOrder ? getString(R.string.sort_by_name_ascending)
             : getString(R.string.sort_by_name_descending);
     item.setTitle(title);
+  }
+
+  @Override public void onQueryChange(final String query) {
+    filterPeopleList(query);
+  }
+
+  private void filterPeopleList(final String query) {
+    Timber.d("Search Query updated: %s", query);
   }
 }
