@@ -29,4 +29,8 @@
   <string name="ask_for_reset_database">Are you sure to reset all your database?</string>
   <string name="ask_for_delete_person">Are you sure to delete this person?</string>
   <string name="checked">Checked</string>
+  <string name="sort_by_name_ascending">▲ Sort by name</string>
+  <string name="sort_by_name_descending">▼ Sort by name</string>
+  <string name="sort_by_status_ascending">▲ Sort by status</string>
+  <string name="sort_by_status_descending">▼ Sort by status</string>
 </resources>

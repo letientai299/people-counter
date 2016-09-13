@@ -61,15 +61,17 @@ class PersonRecyclerViewAdapter
       return true;
     });
 
-    holder.view.setOnClickListener(v -> {
-      actionHandler.toggleCheck(person);
-    });
+    // Only enable toggle action in counting mode
+    if (isCountingMode) {
+      holder.view.setOnClickListener(v -> {
+        actionHandler.toggleCheck(person);
+      });
 
-    int checkedIconResource =
-        person.isChecked() ? R.drawable.ic_check_circle_green_700_48dp
-            : R.drawable.ic_check_circle_grey_700_48dp;
-    holder.checkedIcon.setImageResource(checkedIconResource);
-    if (!isCountingMode) {
+      int checkedIconResource =
+          person.isChecked() ? R.drawable.ic_check_circle_green_700_48dp
+              : R.drawable.ic_check_circle_grey_700_48dp;
+      holder.checkedIcon.setImageResource(checkedIconResource);
+    } else {
       holder.checkedIcon.setVisibility(GONE);
     }
   }

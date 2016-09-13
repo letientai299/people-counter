@@ -10,8 +10,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -26,6 +28,7 @@ import com.bosch.peoplecounter.R;
 import com.bosch.peoplecounter.Utils;
 import com.bosch.peoplecounter.data.Person;
 import com.bosch.peoplecounter.data.PersonStorage;
+import com.mancj.materialsearchbar.MaterialSearchBar;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,10 +45,19 @@ import static com.bosch.peoplecounter.R.id.personName;
  */
 public class ListingFragment extends Fragment
     implements PersonCardActionHandler,
-    PersonStorage.StorageChangeListener<Person> {
+    PersonStorage.StorageChangeListener<Person>,
+    MaterialSearchBar.OnSearchActionListener,
+    PopupMenu.OnMenuItemClickListener {
+
+  private static final String KEY_SORT_NAME =
+      ListingFragment.class.getSimpleName() + "/sortByName";
+  private static final String KEY_SORT_STATUS =
+      ListingFragment.class.getSimpleName() + "/sortByStatus";
+
   private Unbinder unbinder;
 
   @BindView(R.id.people_list) RecyclerView peopleList;
+  @BindView(R.id.searchBar) MaterialSearchBar searchBar;
 
   @Inject PersonStorage storage;
 
@@ -83,7 +95,23 @@ public class ListingFragment extends Fragment
     peopleList.setAdapter(peopleListAdapter);
     storage.addStorageChangeListener(this);
     updatePeopleList();
+
+    configSearchBar();
+
     return view;
+  }
+
+  private void configSearchBar() {
+    searchBar.setOnSearchActionListener(this);
+    searchBar.inflateMenu(R.menu.sorting);
+    searchBar.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
+      boolean nameOrder = getSharedPref().getBoolean(KEY_SORT_NAME, false);
+      configSortNameMenuItemTitle(menu.getItem(0), nameOrder);
+
+      boolean statusOrder = getSharedPref().getBoolean(KEY_SORT_STATUS, false);
+      configSortStatusMenuItemTitle(menu.getItem(1), statusOrder);
+    });
+    searchBar.getMenu().setOnMenuItemClickListener(this);
   }
 
   private void updatePeopleList() {
@@ -223,9 +251,72 @@ public class ListingFragment extends Fragment
   }
 
   public boolean getModeFromPref() {
-    SharedPreferences sharedPref =
-        PreferenceManager.getDefaultSharedPreferences(
-            PeopleCounterApp.getInstance());
+    SharedPreferences sharedPref = getSharedPref();
     return sharedPref.getBoolean(MainActivity.PREF_THEME, false);
+  }
+
+  private SharedPreferences getSharedPref() {
+    return PreferenceManager.getDefaultSharedPreferences(
+        PeopleCounterApp.getInstance());
+  }
+
+  @Override public void onSearchStateChanged(final boolean state) {
+    System.out.println(state);
+  }
+
+  @Override public void onSearchConfirmed(final CharSequence query) {
+    System.out.println(query);
+  }
+
+  @Override public void onButtonClicked(final int i) {
+
+  }
+
+  @Override public boolean onMenuItemClick(final MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.sort_by_name:
+        toggleSortNameMode(item);
+        break;
+      case R.id.sort_by_status:
+        toggleSortStatusMode(item);
+        break;
+      default:
+        // Should never get there
+        break;
+    }
+
+    return true;
+  }
+
+  private void toggleSortStatusMode(final MenuItem item) {
+    boolean statusOrderIsAscending =
+        getSharedPref().getBoolean(KEY_SORT_STATUS, false);
+    getSharedPref().edit()
+        .putBoolean(KEY_SORT_STATUS, !statusOrderIsAscending)
+        .apply();
+    configSortStatusMenuItemTitle(item, statusOrderIsAscending);
+  }
+
+  private void configSortStatusMenuItemTitle(final MenuItem item,
+      final boolean isAscending) {
+    String title = isAscending ? getString(R.string.sort_by_status_ascending)
+        : getString(R.string.sort_by_status_descending);
+    item.setTitle(title);
+  }
+
+  private void configSortNameMenuItemTitle(final MenuItem item,
+      final boolean isAscending) {
+    String title = isAscending ? getString(R.string.sort_by_name_ascending)
+        : getString(R.string.sort_by_name_descending);
+    item.setTitle(title);
+  }
+
+  private void toggleSortNameMode(final MenuItem item) {
+    boolean currentNameOrderIsAscending =
+        getSharedPref().getBoolean(KEY_SORT_NAME, false);
+    getSharedPref().edit()
+        .putBoolean(KEY_SORT_NAME, !currentNameOrderIsAscending)
+        .apply();
+    configSortNameMenuItemTitle(item, currentNameOrderIsAscending);
   }
 }

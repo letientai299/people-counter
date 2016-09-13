@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+  <item
+      android:id="@+id/sort_by_name"
+      android:title="@string/sort_by_name_descending"
+      android:titleCondensed="▼ Name"/>
+
+  <item
+      android:id="@+id/sort_by_status"
+      android:title="@string/sort_by_status_descending"
+      android:titleCondensed="▼ Status"/>
+</menu>

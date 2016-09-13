@@ -59,4 +59,7 @@ dependencies {
 
   // Photo view
   compile 'com.github.chrisbanes:PhotoView:1.3.0'
+
+  // Search view
+  compile 'com.github.mancj:MaterialSearchBar:0.3.1'
 }
