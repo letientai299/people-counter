@@ -20,7 +20,6 @@ public class PersonStorage {
   private List<StorageChangeListener<Person>> listeners = new ArrayList<>();
 
   PersonStorage() {
-    Timber.d("Init PersonStorage");
     DaoSession daoSession = PeopleCounterApp.getInstance().getDaoSession();
     PersonDao dao = daoSession.getPersonDao();
     peopleDao = dao.rx();
@@ -28,7 +27,7 @@ public class PersonStorage {
   }
 
   public void addStorageChangeListener(StorageChangeListener<Person> listener) {
-    if (listener != null) {
+    if (listener != null && !listeners.contains(listener)) {
       listeners.add(listener);
     }
   }
@@ -111,5 +110,6 @@ public class PersonStorage {
   public long countSync() {
     return peopleDao.count().toBlocking().last();
   }
+
 }
 

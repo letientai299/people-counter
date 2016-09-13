@@ -100,7 +100,6 @@ public class ListingFragment extends Fragment
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     PeopleCounterApp.getInstance().getGraph().inject(this);
-    storage.addStorageChangeListener(this);
     if (storage.countSync() != 0) {
       View view = inflater.inflate(R.layout.frag_listing, container, false);
       isCountingMode = getModeFromPref();
@@ -114,8 +113,21 @@ public class ListingFragment extends Fragment
       configSearchBar();
       return view;
     }
+
     unbinder = null;
-    return inflater.inflate(R.layout.frag_empty_data, container, false);
+    View view = inflater.inflate(R.layout.frag_empty_data, container, false);
+    View importButton = ButterKnife.findById(view, R.id.importFromExcelButton);
+    importButton.setOnClickListener(v -> {
+      // Let's MainActivity restart this fragment
+      Utils.startFilePickerIntent(getActivity(), Utils.EXCEL_MIME_TYPES);
+      storage.removeStorageChangeListener(this);
+    });
+    return view;
+  }
+
+  @Override public void onStart() {
+    super.onStart();
+    storage.addStorageChangeListener(this);
   }
 
   private void configSearchBar() {
@@ -150,6 +162,11 @@ public class ListingFragment extends Fragment
     peopleListAdapter.notifyDataSetChanged();
   }
 
+  @Override public void onStop() {
+    super.onStop();
+    storage.removeStorageChangeListener(this);
+  }
+
   @Override public void onDestroyView() {
     super.onDestroyView();
     // unbinder can be null if the app is started without any data.
@@ -159,11 +176,9 @@ public class ListingFragment extends Fragment
         .putBoolean(KEY_SORT_NAME, isAscendingNameOrder)
         .putBoolean(KEY_SORT_STATUS, isAscendingStatusOder)
         .apply();
-    storage.removeStorageChangeListener(this);
   }
 
   @Override public void call(final String number) {
-
     final Intent intent = new Intent(Intent.ACTION_DIAL);
     intent.setData(Uri.fromParts("tel", number, null));
     getActivity().startActivity(intent);
@@ -249,10 +264,9 @@ public class ListingFragment extends Fragment
 
   @Override public void onAdd(final Person item) {
     getActivity().runOnUiThread(() -> {
-      if (unbinder == null) {
-        recreate();
+      if (unbinder != null) {
+        addCard(item);
       }
-      addCard(item);
     });
   }
 
@@ -264,15 +278,10 @@ public class ListingFragment extends Fragment
   }
 
   @Override public void onClearAll() {
-    getActivity().runOnUiThread(this::recreate);
-  }
-
-  private void recreate() {
-    getActivity().getSupportFragmentManager()
-        .beginTransaction()
-        .detach(this)
-        .attach(this)
-        .commit();
+    getActivity().runOnUiThread(() -> {
+      storage.removeStorageChangeListener(this);
+      Utils.recreateFragment(this);
+    });
   }
 
   @Override public void onUpdate(final Person item) {
@@ -364,3 +373,4 @@ public class ListingFragment extends Fragment
     });
   }
 }
+

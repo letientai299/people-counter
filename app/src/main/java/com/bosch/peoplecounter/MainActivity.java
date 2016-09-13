@@ -1,6 +1,8 @@
 package com.bosch.peoplecounter;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity
   @BindView(R.id.drawer_layout) DrawerLayout drawer;
 
   private Unbinder unbinder;
+  private List<Fragment> pages;
   private final List<String> tabTitles = new ArrayList<>();
 
   @Inject PersonStorage storage;
@@ -76,11 +79,11 @@ public class MainActivity extends AppCompatActivity
     }
     tabTitles.add(getString(R.string.tab_title_events));
 
-    final List<Fragment> fragments = new ArrayList<>();
-    fragments.add(new ListingFragment());
-    fragments.add(new EventsFragment());
+    pages = new ArrayList<>();
+    pages.add(new ListingFragment());
+    pages.add(new EventsFragment());
     final TabPagerAdapter tabLayoutAdapter =
-        new TabPagerAdapter(getSupportFragmentManager(), fragments, tabTitles);
+        new TabPagerAdapter(getSupportFragmentManager(), pages, tabTitles);
     pager.setAdapter(tabLayoutAdapter);
     tabs.setupWithViewPager(pager);
   }
@@ -159,8 +162,10 @@ public class MainActivity extends AppCompatActivity
       if (!name.trim().isEmpty()) {
         Person person = new Person(null, false, name, number);
         storage.add(person).observeOn(AndroidSchedulers.mainThread()).
-            subscribe(p -> Toast.makeText(this, "Add \"" + p.getName() + "\'",
-                Toast.LENGTH_SHORT).show());
+            subscribe(p -> {
+              Toast.makeText(this, "Add \"" + p.getName() + "\'",
+                  Toast.LENGTH_SHORT).show();
+            });
       } else {
         Toast.makeText(this, "Person name cannot be empty. Discard!",
             Toast.LENGTH_SHORT).show();
@@ -227,5 +232,26 @@ public class MainActivity extends AppCompatActivity
       if (titles.size() > position) return titles.get(position);
       return "Fragment #" + position;
     }
+  }
+
+  @Override
+  public void onActivityResult(final int requestCode, final int resultCode,
+      final Intent data) {
+    if (requestCode == Utils.CODE_FILE_PICKER && resultCode == RESULT_OK) {
+      Uri uri = data.getData();
+      Utils.parseExcel(uri)
+          .subscribe(p -> storage.add(p).subscribe(), error -> runOnUiThread(
+              () -> Toast.makeText(this,
+                  "Error during parsing Excel file: " + error.getMessage(),
+                  Toast.LENGTH_LONG).show()),
+              () -> {
+                // restart the list fragment when complete
+                Utils.recreateFragment(pages.get(0));
+              });
+
+      return;
+    }
+
+    super.onActivityResult(requestCode, resultCode, data);
   }
 }
