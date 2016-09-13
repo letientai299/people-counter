@@ -75,23 +75,6 @@ public class PersonStorage {
     });
   }
 
-  /**
-   * Generate a number of fake people data.
-   */
-  public void gen(final int number) {
-    List<Person> people = new ArrayList<>();
-    for (int i = 0; i < number; i++) {
-      Person person = createPerson("Person #" + i, randomPhoneNumber());
-      people.add(person);
-    }
-
-    peopleDao.insertInTx(people).flatMap(Observable::from).subscribe((p) -> {
-      for (final StorageChangeListener<Person> listener : listeners) {
-        listener.onAdd(p);
-      }
-    });
-  }
-
   public Observable<Person> update(Person p) {
     return peopleDao.update(p).doOnCompleted(() -> {
       for (final StorageChangeListener<Person> listener : listeners) {

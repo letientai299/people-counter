@@ -11,7 +11,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import com.bosch.peoplecounter.R;
 import com.bosch.peoplecounter.data.Person;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -24,8 +23,8 @@ import static android.view.View.GONE;
 
 class PersonRecyclerViewAdapter
     extends RecyclerView.Adapter<PersonRecyclerViewAdapter.PersonViewHolder> {
-  private final List<Person> people;
-  private final List<Person> filteringPeople = new ArrayList<>();
+  private final SortedList people;
+  private final SortedList filteringPeople;
   private final PersonCardActionHandler actionHandler;
   private boolean isCountingMode = false;
   private boolean filterEnable = false;
@@ -45,8 +44,12 @@ class PersonRecyclerViewAdapter
   private void updateFilteringPeople() {
     filteringPeople.clear();
     for (int i = 0; i < people.size(); i++) {
-      if (personMatchQuery(people.get(i))) filteringPeople.add(people.get(i));
+      Person person = people.get(i);
+      if (personMatchQuery(person)) {
+        filteringPeople.add(people.get(i));
+      }
     }
+    notifyDataSetChanged();
   }
 
   void setFilterQuery(String query) {
@@ -54,9 +57,10 @@ class PersonRecyclerViewAdapter
     updateFilteringPeople();
   }
 
-  PersonRecyclerViewAdapter(List<Person> people,
+  PersonRecyclerViewAdapter(Comparator<Person> comparator,
       PersonCardActionHandler handler) {
-    this.people = people;
+    this.people = new SortedList(comparator);
+    this.filteringPeople = new SortedList(comparator);
     this.actionHandler = handler;
   }
 
@@ -112,6 +116,44 @@ class PersonRecyclerViewAdapter
     return people;
   }
 
+  void clear() {
+    this.people.clear();
+    notifyDataSetChanged();
+    updateFilteringPeople();
+  }
+
+  public void add(final Person p) {
+    int index = people.binaryInsert(p);
+    notifyItemInserted(index);
+    updateFilteringPeople();
+  }
+
+  void delete(final Person p) {
+    int index = people.indexOf(p);
+    if (index != -1) {
+      people.remove(index);
+      notifyItemRemoved(index);
+    }
+    updateFilteringPeople();
+  }
+
+  void update(final Person item) {
+    int updatedId = -1;
+    for (int i = 0; i < people.size(); i++) {
+      Person p = people.get(i);
+      if (p.getId().equals(item.getId())) {
+        updatedId = i;
+        break;
+      }
+    }
+    if (updatedId != -1) {
+      people.remove(updatedId);
+      notifyItemRemoved(updatedId);
+      add(item);
+    }
+    updateFilteringPeople();
+  }
+
   static class PersonViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.nameTextView) TextView nameTextView;
     @BindView(R.id.phoneNumberTextView) TextView phoneNumberTextView;
@@ -131,6 +173,5 @@ class PersonRecyclerViewAdapter
   void reorder(Comparator<Person> comparator) {
     Collections.sort(people, comparator);
     updateFilteringPeople();
-    this.notifyDataSetChanged();
   }
 }

@@ -32,8 +32,6 @@ import com.bosch.peoplecounter.data.Person;
 import com.bosch.peoplecounter.data.PersonStorage;
 import com.bosch.peoplecounter.data.StorageChangeListener;
 import com.mancj.materialsearchbar.MaterialSearchBar;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import javax.inject.Inject;
 import jp.wasabeef.recyclerview.animators.BaseItemAnimator;
@@ -52,7 +50,7 @@ public class ListingFragment extends Fragment
     MaterialSearchBar.OnSearchActionListener, PopupMenu.OnMenuItemClickListener,
     MaterialSearchBarSearchOnTyping.SearchQueryListener {
 
-  public static final int ANIMATION_DURATION = 500;
+  public static final int ANIMATION_DURATION = 200;
   private static final String KEY_SORT_NAME =
       ListingFragment.class.getSimpleName() + "/sortByName";
   private static final String KEY_SORT_STATUS =
@@ -60,7 +58,6 @@ public class ListingFragment extends Fragment
   /**
    * Make the people list auto sorted by person name.
    */
-  @BindView(R.id.people_list) RecyclerView peopleList;
   @BindView(R.id.searchBar) MaterialSearchBarSearchOnTyping searchBar;
   @Inject PersonStorage storage;
   private Unbinder unbinder;
@@ -81,7 +78,6 @@ public class ListingFragment extends Fragment
     if (isAscendingNameOrder) compareName = -compareName;
     return compareName;
   };
-  private final SortedList people = new SortedList(personComparator);
   private PersonRecyclerViewAdapter peopleListAdapter;
 
   public ListingFragment() {
@@ -97,9 +93,11 @@ public class ListingFragment extends Fragment
       View view = inflater.inflate(R.layout.frag_listing, container, false);
       isCountingMode = getModeFromPref();
       unbinder = ButterKnife.bind(this, view);
-      peopleListAdapter = new PersonRecyclerViewAdapter(people, this);
+      peopleListAdapter = new PersonRecyclerViewAdapter(personComparator, this);
       peopleListAdapter.setCountingMode(isCountingMode);
 
+      final RecyclerView peopleList =
+          ButterKnife.findById(view, R.id.people_list);
       peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
       OvershootInterpolator interpolator = new OvershootInterpolator(1f);
       BaseItemAnimator animator = new SlideInUpAnimator(interpolator);
@@ -109,9 +107,6 @@ public class ListingFragment extends Fragment
       peopleList.getItemAnimator().setMoveDuration(ANIMATION_DURATION);
       peopleList.getItemAnimator().setChangeDuration(ANIMATION_DURATION);
       peopleList.setAdapter(peopleListAdapter);
-
-      updatePeopleList();
-
       configSearchBar();
       return view;
     }
@@ -130,6 +125,9 @@ public class ListingFragment extends Fragment
   @Override public void onStart() {
     super.onStart();
     storage.addStorageChangeListener(this);
+    if (unbinder != null) {
+      updatePeopleList();
+    }
   }
 
   private void configSearchBar() {
@@ -151,21 +149,17 @@ public class ListingFragment extends Fragment
   }
 
   private void updatePeopleList() {
-    people.clear();
-    peopleListAdapter.notifyDataSetChanged();
+    peopleListAdapter.clear();
     final Handler handler = new Handler();
     handler.postDelayed(() -> storage.getPeople()
         .flatMap(Observable::from)
         .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(ListingFragment.this::addCard), 300);
-  }
-
-  private void addCard(final Person p) {
-    int index = people.binaryInsert(p);
-    if (index != -1) {
-      //peopleListAdapter.notifyDataSetChanged();
-      peopleListAdapter.notifyItemInserted(index);
-    }
+        .doOnCompleted(() -> getActivity().runOnUiThread(() -> {
+          peopleListAdapter.setFilterEnable(searchBar.isSearchEnabled());
+          peopleListAdapter.setFilterQuery(
+              searchBar.searchEdit.getText().toString());
+        }))
+        .subscribe(p -> peopleListAdapter.add(p)), 600);
   }
 
   @Override public void onStop() {
@@ -253,9 +247,10 @@ public class ListingFragment extends Fragment
         .setPositiveButton("Save", (dialog, which) -> {
           final String name =
               ((TextView) ButterKnife.findById(view, personName)).getText()
-                  .toString();
+                  .toString()
+                  .trim();
           final String phone = ((TextView) ButterKnife.findById(view,
-              R.id.phoneNumber)).getText().toString();
+              R.id.phoneNumber)).getText().toString().trim();
           p.setName(name);
           p.setPhoneNumber(phone);
           storage.update(p).subscribe(person -> {
@@ -268,19 +263,16 @@ public class ListingFragment extends Fragment
         .show();
   }
 
-  @Override public void onAdd(final Person item) {
+  @Override public void onAdd(final Person p) {
     getActivity().runOnUiThread(() -> {
       if (unbinder != null) {
-        addCard(item);
+        peopleListAdapter.add(p);
       }
     });
   }
 
-  @Override public void onDelete(final Person item) {
-    getActivity().runOnUiThread(() -> {
-      people.remove(item);
-      peopleListAdapter.notifyDataSetChanged();
-    });
+  @Override public void onDelete(final Person p) {
+    getActivity().runOnUiThread(() -> peopleListAdapter.delete(p));
   }
 
   @Override public void onClearAll() {
@@ -291,21 +283,7 @@ public class ListingFragment extends Fragment
   }
 
   @Override public void onUpdate(final Person item) {
-    getActivity().runOnUiThread(() -> {
-      int updatedId = -1;
-      for (int i = 0; i < people.size(); i++) {
-        Person p = people.get(i);
-        if (p.getId().equals(item.getId())) {
-          updatedId = i;
-          break;
-        }
-      }
-      if (updatedId != -1) {
-        people.remove(updatedId);
-        people.add(item);
-        peopleListAdapter.notifyDataSetChanged();
-      }
-    });
+    getActivity().runOnUiThread(() -> peopleListAdapter.update(item));
   }
 
   public boolean getModeFromPref() {
@@ -374,29 +352,7 @@ public class ListingFragment extends Fragment
   }
 
   private void filterPeopleList(final String query) {
-    getActivity().runOnUiThread(() -> {
-      peopleListAdapter.setFilterQuery(query);
-      peopleListAdapter.notifyDataSetChanged();
-    });
-  }
-
-  static class SortedList extends ArrayList<Person> {
-    private final Comparator<Person> comparator;
-
-    SortedList(Comparator<Person> comp) {
-      this.comparator = comp;
-    }
-
-    @Override public boolean add(final Person o) {
-      return binaryInsert(o) != -1;
-    }
-
-    int binaryInsert(Person p) {
-      int index = Collections.binarySearch(this, p, comparator);
-      if (index < 0) index = ~index;
-      super.add(index, p);
-      return index;
-    }
+    getActivity().runOnUiThread(() -> peopleListAdapter.setFilterQuery(query));
   }
 }
 

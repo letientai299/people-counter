@@ -99,7 +99,6 @@ public class MainActivity extends AppCompatActivity
     drawerActions.add(getString(R.string.drawer_tittle_add_new_person));
     drawerActions.add(getString(R.string.drawer_tittle_import));
     drawerActions.add(getString(R.string.drawer_tittle_reset_database));
-    drawerActions.add(getString(R.string.drawer_tittle_gen_fake_data));
     final BaseAdapter drawerAdapter =
         new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,
             drawerActions);
@@ -130,15 +129,12 @@ public class MainActivity extends AppCompatActivity
       case 1: // add new person
         openPersonEditingDialog();
         break;
-      case 2:
+      case 2: // Import from Excel
+        Utils.startFilePickerIntent(this, Utils.EXCEL_MIME_TYPES);
         break;
       case 3: // Reset database
         askForDoSomething(this, getString(R.string.ask_for_reset_database),
             this::resetDatabase);
-        break;
-      case 4: // Gen fake data
-        askForDoSomething(this, getString(R.string.ask_for_generate_fake_data),
-            this::genFakeData);
         break;
       default:
         // should never happen.
@@ -191,10 +187,6 @@ public class MainActivity extends AppCompatActivity
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(v -> Toast.makeText(this, "All data has been cleared.",
             Toast.LENGTH_SHORT).show());
-  }
-
-  private void genFakeData() {
-    storage.gen(10);
   }
 
   private void toggleCountingMode() {
