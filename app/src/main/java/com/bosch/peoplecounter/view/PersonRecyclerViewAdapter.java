@@ -13,7 +13,6 @@ import com.bosch.peoplecounter.R;
 import com.bosch.peoplecounter.data.Person;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static android.view.View.GONE;
 
@@ -49,7 +48,7 @@ class PersonRecyclerViewAdapter
   }
 
   void setFilterQuery(String query) {
-    this.filterQuery = query;
+    this.filterQuery = query.toLowerCase();
     updateFilteringPeople();
   }
 
@@ -94,9 +93,8 @@ class PersonRecyclerViewAdapter
   }
 
   private boolean personMatchQuery(final Person person) {
-    Pattern pattern = Pattern.compile(filterQuery);
-    return pattern.matcher(person.getName()).find() || pattern.matcher(
-        person.getPhoneNumber()).find();
+    return person.getName().toLowerCase().contains(filterQuery)
+        || person.getPhoneNumber().toLowerCase().contains(filterQuery);
   }
 
   @Override public int getItemCount() {
