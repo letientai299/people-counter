@@ -80,12 +80,12 @@ public class ListingFragment extends Fragment
   private final Comparator<Person> personComparator = (o1, o2) -> {
     if (isCountingMode) {
       int compareStatus = Boolean.compare(o1.getChecked(), o2.getChecked());
-      if (!isAscendingStatusOder) compareStatus = -compareStatus;
+      if (isAscendingStatusOder) compareStatus = -compareStatus;
       if (compareStatus != 0) return compareStatus;
     }
 
     int compareName = o1.getName().compareTo(o2.getName());
-    if (!isAscendingNameOrder) compareName = -compareName;
+    if (isAscendingNameOrder) compareName = -compareName;
     return compareName;
   };
 
