@@ -14,17 +14,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import rx.Observable;
+import rx.schedulers.Schedulers;
 
 public class Utils {
-  static final int CODE_FILE_PICKER = 1;
   public static final String[] EXCEL_MIME_TYPES = new String[] {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "application/vnd.ms-excel", "application/octet-stream"
   };
+  static final int CODE_FILE_PICKER = 1;
 
   public static void askForDoSomething(Context context, String message,
       Runnable action) {
@@ -59,7 +61,7 @@ public class Utils {
   }
 
   static Observable<Person> parseExcel(Uri uri) {
-    return Observable.create((subscriber) -> {
+    Observable<Person> objectObservable = Observable.create((subscriber) -> {
       Workbook wb = null;
       try {
         wb = createWorkbook(uri);
@@ -80,11 +82,64 @@ public class Utils {
         subscriber.onError(ioe);
       }
     });
+
+    objectObservable.subscribeOn(Schedulers.newThread());
+
+    return objectObservable;
   }
 
   private static Person parseRow(final Row row) {
-    String name = row.getCell(2).getStringCellValue();
-    return new Person(null, false, name, "");
+    Person person = new Person();
+
+    Iterator<Cell> iterator = row.iterator();
+    iterator.next(); // ignore No.
+    iterator.next(); // ignore Employee code
+
+    // name
+    String name = convertAndGetStringCellValue(iterator.next());
+    person.setName(name);
+
+    iterator.next(); // who cares about department
+
+    String group = convertAndGetStringCellValue(iterator.next());
+    person.setGroup(group);
+
+    String genderString = convertAndGetStringCellValue(iterator.next());
+    person.setIsMale(genderString.equalsIgnoreCase("M"));
+
+    iterator.next();
+    iterator.next();
+    iterator.next(); // ignore direct and indirect manager, and also the T-Shirt size
+
+    String room = convertAndGetStringCellValue(iterator.next());
+    person.setRoom(room);
+
+    String hotel = convertAndGetStringCellValue(iterator.next());
+    person.setHotel(hotel);
+
+    // Now, skip bus and the coordinator
+    iterator.next();
+    iterator.next();
+
+    // This is last column, and maybe they didn't update the phone number for me to parse
+    if (iterator.hasNext()) {
+      String phone = convertAndGetStringCellValue(iterator.next());
+      person.setPhoneNumber(phone);
+    }
+
+    return person;
+  }
+
+  private static String convertAndGetStringCellValue(final Cell cell) {
+    if (cell == null) {
+      return "";
+    }
+
+    cell.setCellType(Cell.CELL_TYPE_STRING);
+    String stringCellValue = cell.getStringCellValue();
+    if (stringCellValue == null) return "";
+
+    return stringCellValue.trim();
   }
 
   private static Workbook createWorkbook(final Uri uri) throws IOException {

@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
@@ -79,7 +78,10 @@ public class ListingFragment extends Fragment
   private boolean isAscendingNameOrder;
   private final Comparator<Person> personComparator = (o1, o2) -> {
     if (isCountingMode) {
-      int compareStatus = Boolean.compare(o1.getChecked(), o2.getChecked());
+      int compareStatus = 0;
+      boolean x = o1.getChecked();
+      boolean y = o2.getChecked();
+      compareStatus = (x == y) ? 0 : (x ? 1 : -1);
       if (isAscendingStatusOder) compareStatus = -compareStatus;
       if (compareStatus != 0) return compareStatus;
     }
@@ -289,7 +291,7 @@ public class ListingFragment extends Fragment
       int updatedId = -1;
       for (int i = 0; i < people.size(); i++) {
         Person p = people.get(i);
-        if (Objects.equals(p.getId(), item.getId())) {
+        if (p.getId().equals(item.getId())) {
           updatedId = i;
           break;
         }

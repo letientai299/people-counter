@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 import static com.bosch.peoplecounter.Utils.askForDoSomething;
 
@@ -157,10 +158,14 @@ public class MainActivity extends AppCompatActivity
     builder.setPositiveButton("OK", (dialog, which) -> {
       EditText nameEditText = ButterKnife.findById(view, R.id.personName);
       String name = nameEditText.getText().toString();
-      EditText phoneEditText = ButterKnife.findById(view, R.id.phoneNumber);
-      String number = phoneEditText.getText().toString();
       if (!name.trim().isEmpty()) {
-        Person person = new Person(null, false, name, number);
+        Person person = new Person();
+        person.setName(name);
+
+        EditText phoneEditText = ButterKnife.findById(view, R.id.phoneNumber);
+        String number = phoneEditText.getText().toString();
+        person.setPhoneNumber(number);
+
         storage.add(person).observeOn(AndroidSchedulers.mainThread()).
             subscribe(p -> {
               Toast.makeText(this, "Add \"" + p.getName() + "\'",
@@ -245,6 +250,7 @@ public class MainActivity extends AppCompatActivity
     if (requestCode == Utils.CODE_FILE_PICKER && resultCode == RESULT_OK) {
       Uri uri = data.getData();
       Utils.parseExcel(uri)
+          .observeOn(Schedulers.newThread())
           .subscribe(p -> storage.add(p).subscribe(), error -> runOnUiThread(
               () -> {
                 Toast.makeText(this,
