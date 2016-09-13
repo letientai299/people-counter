@@ -31,6 +31,7 @@ import com.bosch.peoplecounter.data.PersonStorage;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
@@ -66,15 +67,29 @@ public class ListingFragment extends Fragment
    */
   private final List<Person> people = new ArrayList<Person>() {
     public boolean add(Person mt) {
-      int index = Collections.binarySearch(this, mt,
-          (o1, o2) -> o1.getName().compareTo(o2.getName()));
+      int index = Collections.binarySearch(this, mt, personComparator);
       if (index < 0) index = ~index;
       super.add(index, mt);
       return true;
     }
   };
-  private PersonRecyclerViewAdapter peopleListAdapter;
+
   private boolean isCountingMode;
+  private boolean isAscendingStatusOder;
+  private boolean isAscendingNameOrder;
+  private final Comparator<Person> personComparator = (o1, o2) -> {
+    if (isCountingMode) {
+      int compareStatus = Boolean.compare(o1.getChecked(), o2.getChecked());
+      if (!isAscendingStatusOder) compareStatus = -compareStatus;
+      if (compareStatus != 0) return compareStatus;
+    }
+
+    int compareName = o1.getName().compareTo(o2.getName());
+    if (!isAscendingNameOrder) compareName = -compareName;
+    return compareName;
+  };
+
+  private PersonRecyclerViewAdapter peopleListAdapter;
 
   public ListingFragment() {
     super();
@@ -102,16 +117,19 @@ public class ListingFragment extends Fragment
   }
 
   private void configSearchBar() {
+    isAscendingStatusOder = getSharedPref().getBoolean(KEY_SORT_STATUS, false);
+    isAscendingNameOrder = getSharedPref().getBoolean(KEY_SORT_NAME, false);
+
     searchBar.setOnSearchActionListener(this);
     searchBar.inflateMenu(R.menu.sorting);
-    searchBar.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
-      boolean nameOrder = getSharedPref().getBoolean(KEY_SORT_NAME, false);
-      configSortNameMenuItemTitle(menu.getItem(0), nameOrder);
-
-      boolean statusOrder = getSharedPref().getBoolean(KEY_SORT_STATUS, false);
-      configSortStatusMenuItemTitle(menu.getItem(1), statusOrder);
-    });
-    searchBar.getMenu().setOnMenuItemClickListener(this);
+    PopupMenu menu = searchBar.getMenu();
+    menu.setOnMenuItemClickListener(this);
+    updateSortNameMenuItemTitle(menu.getMenu().getItem(0));
+    updateSortStatusMenuItemTitle(menu.getMenu().getItem(1));
+    // Disable sort by status if not in counting mode
+    if (!isCountingMode) {
+      menu.getMenu().getItem(1).setEnabled(false);
+    }
   }
 
   private void updatePeopleList() {
@@ -131,6 +149,10 @@ public class ListingFragment extends Fragment
   @Override public void onDestroyView() {
     super.onDestroyView();
     unbinder.unbind();
+    getSharedPref().edit()
+        .putBoolean(KEY_SORT_NAME, isAscendingNameOrder)
+        .putBoolean(KEY_SORT_STATUS, isAscendingStatusOder)
+        .apply();
   }
 
   @Override public void call(final String number) {
@@ -275,10 +297,14 @@ public class ListingFragment extends Fragment
   @Override public boolean onMenuItemClick(final MenuItem item) {
     switch (item.getItemId()) {
       case R.id.sort_by_name:
-        toggleSortNameMode(item);
+        isAscendingNameOrder = !isAscendingNameOrder;
+        updateSortNameMenuItemTitle(item);
+        updatePeopleListOrder();
         break;
       case R.id.sort_by_status:
-        toggleSortStatusMode(item);
+        isAscendingStatusOder = !isAscendingStatusOder;
+        updateSortStatusMenuItemTitle(item);
+        updatePeopleListOrder();
         break;
       default:
         // Should never get there
@@ -288,35 +314,22 @@ public class ListingFragment extends Fragment
     return true;
   }
 
-  private void toggleSortStatusMode(final MenuItem item) {
-    boolean statusOrderIsAscending =
-        getSharedPref().getBoolean(KEY_SORT_STATUS, false);
-    getSharedPref().edit()
-        .putBoolean(KEY_SORT_STATUS, !statusOrderIsAscending)
-        .apply();
-    configSortStatusMenuItemTitle(item, statusOrderIsAscending);
+  private void updatePeopleListOrder() {
+    Collections.sort(people, personComparator);
+    peopleListAdapter.notifyDataSetChanged();
   }
 
-  private void configSortStatusMenuItemTitle(final MenuItem item,
-      final boolean isAscending) {
-    String title = isAscending ? getString(R.string.sort_by_status_ascending)
-        : getString(R.string.sort_by_status_descending);
+  private void updateSortStatusMenuItemTitle(final MenuItem item) {
+    String title =
+        isAscendingStatusOder ? getString(R.string.sort_by_status_ascending)
+            : getString(R.string.sort_by_status_descending);
     item.setTitle(title);
   }
 
-  private void configSortNameMenuItemTitle(final MenuItem item,
-      final boolean isAscending) {
-    String title = isAscending ? getString(R.string.sort_by_name_ascending)
-        : getString(R.string.sort_by_name_descending);
+  private void updateSortNameMenuItemTitle(final MenuItem item) {
+    String title =
+        isAscendingNameOrder ? getString(R.string.sort_by_name_ascending)
+            : getString(R.string.sort_by_name_descending);
     item.setTitle(title);
-  }
-
-  private void toggleSortNameMode(final MenuItem item) {
-    boolean currentNameOrderIsAscending =
-        getSharedPref().getBoolean(KEY_SORT_NAME, false);
-    getSharedPref().edit()
-        .putBoolean(KEY_SORT_NAME, !currentNameOrderIsAscending)
-        .apply();
-    configSortNameMenuItemTitle(item, currentNameOrderIsAscending);
   }
 }
