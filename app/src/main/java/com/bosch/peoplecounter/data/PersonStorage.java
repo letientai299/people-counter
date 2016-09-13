@@ -43,7 +43,7 @@ public class PersonStorage {
   }
 
   private Person createPerson(final String name, final String number) {
-    return new Person(null, name, number);
+    return new Person(null, false, name, number);
   }
 
   private SecureRandom random = new SecureRandom();

@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity
       EditText phoneEditText = ButterKnife.findById(view, R.id.phoneNumber);
       String number = phoneEditText.getText().toString();
       if (!name.trim().isEmpty()) {
-        Person person = new Person(null, name, number);
+        Person person = new Person(null, false, name, number);
         storage.add(person).observeOn(AndroidSchedulers.mainThread()).
             subscribe(p -> Toast.makeText(this, "Add \"" + p.getName() + "\'",
                 Toast.LENGTH_SHORT).show());

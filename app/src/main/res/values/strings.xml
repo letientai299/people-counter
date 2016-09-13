@@ -28,4 +28,5 @@
     Are you sure to pollute your database with fake data?</string>
   <string name="ask_for_reset_database">Are you sure to reset all your database?</string>
   <string name="ask_for_delete_person">Are you sure to delete this person?</string>
+  <string name="checked">Checked</string>
 </resources>

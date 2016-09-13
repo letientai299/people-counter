@@ -11,4 +11,6 @@ interface PersonCardActionHandler {
   void sms(String number);
 
   void openContextMenu(Person p);
+
+  void toggleCheck(Person p);
 }

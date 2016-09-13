@@ -27,13 +27,25 @@ import org.greenrobot.greendao.annotation.NotNull;
     this.phoneNumber = phoneNumber;
   }
 
+  public boolean isChecked() {
+    return checked;
+  }
+
+  public void setChecked(final boolean checked) {
+    this.checked = checked;
+  }
+
+  private boolean checked = false;
+
   @NotNull private String name;
 
   private String phoneNumber;
 
-  @Generated(hash = 426705471)
-  public Person(Long id, @NotNull String name, String phoneNumber) {
+  @Generated(hash = 1748790763)
+  public Person(Long id, boolean checked, @NotNull String name,
+      String phoneNumber) {
     this.id = id;
+    this.checked = checked;
     this.name = name;
     this.phoneNumber = phoneNumber;
   }
@@ -60,8 +72,13 @@ import org.greenrobot.greendao.annotation.NotNull;
   @Override public String toString() {
     return "Person{" +
         "id=" + id +
+        ", checked=" + checked +
         ", name='" + name + '\'' +
         ", phoneNumber='" + phoneNumber + '\'' +
         '}';
+  }
+
+  public boolean getChecked() {
+    return this.checked;
   }
 }

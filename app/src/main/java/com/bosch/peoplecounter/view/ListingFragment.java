@@ -76,7 +76,9 @@ public class ListingFragment extends Fragment
     isCountingMode = getModeFromPref();
     View view = inflater.inflate(R.layout.fragment_listing, container, false);
     unbinder = ButterKnife.bind(this, view);
+
     peopleListAdapter = new PersonRecyclerViewAdapter(people, this);
+    peopleListAdapter.setCountingMode(isCountingMode);
     peopleList.setLayoutManager(new LinearLayoutManager(getContext()));
     peopleList.setAdapter(peopleListAdapter);
     storage.addStorageChangeListener(this);
@@ -145,6 +147,11 @@ public class ListingFragment extends Fragment
         });
 
     personContextDialog.show();
+  }
+
+  @Override public void toggleCheck(final Person p) {
+    p.setChecked(!p.isChecked());
+    storage.update(p).subscribe();
   }
 
   private void changeThemeBasedOnMode(final View view) {
