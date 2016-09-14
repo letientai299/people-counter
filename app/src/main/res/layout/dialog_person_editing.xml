@@ -10,8 +10,8 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:background="@color/colorPrimary"
-      android:textColor="#fff"
       android:padding="@dimen/activity_horizontal_margin"
+      android:textColor="#fff"
       style="@android:style/TextAppearance.Large"
       />
   <android.support.design.widget.TextInputLayout
@@ -32,8 +32,8 @@
 
   <android.support.design.widget.TextInputLayout
       android:layout_width="match_parent"
-      android:padding="@dimen/activity_horizontal_margin"
       android:layout_height="wrap_content"
+      android:padding="@dimen/activity_horizontal_margin"
       >
 
     <EditText
@@ -46,4 +46,50 @@
 
   </android.support.design.widget.TextInputLayout>
 
+  <android.support.design.widget.TextInputLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:padding="@dimen/activity_horizontal_margin"
+      >
+
+    <EditText
+        android:id="@+id/group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:hint="@string/label_group"
+        />
+
+  </android.support.design.widget.TextInputLayout>
+
+  <android.support.design.widget.TextInputLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:padding="@dimen/activity_horizontal_margin"
+      >
+
+    <EditText
+        android:id="@+id/room"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:hint="@string/label_room"
+        />
+
+  </android.support.design.widget.TextInputLayout>
+
+  <android.support.design.widget.TextInputLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:padding="@dimen/activity_horizontal_margin"
+      >
+
+    <EditText
+        android:id="@+id/hotel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/label_hotel"
+        android:inputType="textPersonName"
+        />
+  </android.support.design.widget.TextInputLayout>
 </LinearLayout>

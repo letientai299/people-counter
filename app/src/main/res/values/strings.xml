@@ -35,4 +35,8 @@
   <string name="sort_by_status_descending">▼ Sort by status</string>
   <string name="empty_data_message">Nothing here.\n Perhaps you want to import from your Excel sheet.</string>
   <string name="agree_to_use_import">Yes, get me there</string>
+  <string name="room_hotel">Room - Hotel</string>
+  <string name="label_hotel">Hotel</string>
+  <string name="label_room">Room</string>
+  <string name="label_group">Group</string>
 </resources>

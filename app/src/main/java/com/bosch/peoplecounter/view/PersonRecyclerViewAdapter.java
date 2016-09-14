@@ -74,12 +74,32 @@ class PersonRecyclerViewAdapter
   @Override public void onBindViewHolder(final PersonViewHolder holder,
       final int position) {
     Person person = getPeopleList().get(position);
-    holder.nameTextView.setText(person.getName());
+    String displayName = person.getName();
+    if (!person.getGroup().isEmpty()) {
+      displayName += " (" + person.getGroup() + ")";
+    }
+    holder.nameTextView.setText(displayName);
+
     if (!person.getPhoneNumber().isEmpty()) {
       holder.phoneNumberTextView.setText(person.getPhoneNumber());
     } else {
       holder.phoneNumberTextView.setText("Missing");
     }
+
+    String roomHotel = "";
+    if (!person.getRoom().isEmpty()) {
+      roomHotel += person.getRoom();
+    } else {
+      roomHotel += "???";
+    }
+    if (!person.getHotel().isEmpty()) {
+      roomHotel += " - " + person.getHotel();
+    } else {
+      roomHotel += " - ???";
+    }
+
+    holder.roomHotelTextView.setText(roomHotel);
+
     holder.phoneButton.setOnClickListener(
         view -> actionHandler.call(person.getPhoneNumber()));
     holder.messageButton.setOnClickListener(
@@ -92,19 +112,39 @@ class PersonRecyclerViewAdapter
 
     // Only enable toggle action in counting mode
     if (isCountingMode) {
-      holder.view.setOnClickListener(v -> actionHandler.toggleCheck(person));
-      int checkedIconResource =
-          person.isChecked() ? R.drawable.ic_check_circle_green_700_48dp
-              : R.drawable.ic_check_circle_grey_700_48dp;
-      holder.checkedIcon.setImageResource(checkedIconResource);
+      int visibility = person.isChecked() ? View.VISIBLE : View.GONE;
+      holder.checkedIcon.setVisibility(visibility);
     } else {
       holder.checkedIcon.setVisibility(GONE);
     }
+
+    holder.view.setOnClickListener((v) -> {
+      if (isCountingMode) {
+        actionHandler.toggleCheck(person);
+      }
+    });
   }
 
   private boolean personMatchQuery(final Person person) {
-    return person.getName().toLowerCase().contains(filterQuery)
-        || person.getPhoneNumber().toLowerCase().contains(filterQuery);
+    String s = person.getName() +
+        " " +
+        person.getPhoneNumber() +
+        " " +
+        person.getGroup() +
+        " " +
+        person.getHotel() +
+        " " +
+        person.getRoom();
+    String[] splits = filterQuery.split(" ");
+
+    boolean allMatch = true;
+    for (String part : splits) {
+      if (!s.toLowerCase().contains(part)) {
+        allMatch = false;
+        break;
+      }
+    }
+    return allMatch;
   }
 
   @Override public int getItemCount() {
@@ -155,13 +195,13 @@ class PersonRecyclerViewAdapter
   }
 
   static class PersonViewHolder extends RecyclerView.ViewHolder {
+    private final View view;
     @BindView(R.id.nameTextView) TextView nameTextView;
     @BindView(R.id.phoneNumberTextView) TextView phoneNumberTextView;
     @BindView(R.id.phoneButton) ImageButton phoneButton;
     @BindView(R.id.messageButton) ImageButton messageButton;
     @BindView(R.id.personCheckedIcon) ImageView checkedIcon;
-
-    private View view;
+    @BindView(R.id.roomHotelTextView) TextView roomHotelTextView;
 
     PersonViewHolder(final View itemView) {
       super(itemView);

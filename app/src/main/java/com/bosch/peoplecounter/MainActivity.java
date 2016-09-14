@@ -1,10 +1,12 @@
 package com.bosch.peoplecounter;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -150,27 +152,46 @@ public class MainActivity extends AppCompatActivity
         isCountingMode ? R.color.colorPrimaryCounting : R.color.colorPrimary));
     titleTextView.setText(R.string.drawer_tittle_add_new_person);
     builder.setView(view);
-    builder.setPositiveButton("OK", (dialog, which) -> {
-      EditText nameEditText = ButterKnife.findById(view, R.id.personName);
-      String name = nameEditText.getText().toString();
-      if (!name.trim().isEmpty()) {
-        Person person = new Person();
-        person.setName(name);
+    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(final DialogInterface dialog, final int which) {
+        EditText nameEditText = ButterKnife.findById(view, R.id.personName);
+        String name = nameEditText.getText().toString();
+        if (!name.trim().isEmpty()) {
+          Person person = new Person();
+          person.setName(name);
 
-        EditText phoneEditText = ButterKnife.findById(view, R.id.phoneNumber);
-        String number = phoneEditText.getText().toString();
-        person.setPhoneNumber(number);
+          savePersonInfo(person, view);
 
-        storage.add(person).observeOn(AndroidSchedulers.mainThread()).
-            subscribe(p -> {
-              Toast.makeText(this, "Add \"" + p.getName() + "\'",
-                  Toast.LENGTH_SHORT).show();
-              // Reload if that is a first person in database
-              if (storage.countSync() == 1) reloadListingFragment();
-            });
-      } else {
-        Toast.makeText(this, "Person name cannot be empty. Discard!",
-            Toast.LENGTH_SHORT).show();
+          storage.add(person).observeOn(AndroidSchedulers.mainThread()).
+              subscribe(p -> {
+                Toast.makeText(MainActivity.this, "Add \"" + p.getName() + "\'",
+                    Toast.LENGTH_SHORT).show();
+                // Reload if that is a first person in database
+                if (storage.countSync() == 1) reloadListingFragment();
+              });
+        } else {
+          Toast.makeText(MainActivity.this,
+              "Person name cannot be empty. Discard!", Toast.LENGTH_SHORT)
+              .show();
+        }
+      }
+
+      private void savePersonInfo(final Person p, final View view) {
+        final String phone = getString(view, R.id.phoneNumber);
+        final String group = getString(view, R.id.group);
+        final String hotel = getString(view, R.id.hotel);
+        final String room = getString(view, R.id.room);
+        p.setPhoneNumber(phone);
+        p.setGroup(group);
+        p.setHotel(hotel);
+        p.setRoom(room);
+      }
+
+      @NonNull private String getString(final View view, final int resId) {
+        return ((TextView) ButterKnife.findById(view, resId)).getText()
+            .toString()
+            .trim();
       }
     });
     builder.setNegativeButton("Cancel", null);
