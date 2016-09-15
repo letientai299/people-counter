@@ -91,40 +91,43 @@ public class Utils {
   private static Person parseRow(final Row row) {
     Person person = new Person();
 
-    Iterator<Cell> iterator = row.iterator();
-    iterator.next(); // ignore No.
-    iterator.next(); // ignore Employee code
+    try {
+      Iterator<Cell> iterator = row.iterator();
+      iterator.next(); // ignore No.
+      iterator.next(); // ignore Employee code
 
-    // name
-    String name = convertAndGetStringCellValue(iterator.next());
-    person.setName(name);
+      // name
+      String name = convertAndGetStringCellValue(iterator.next());
+      person.setName(name);
 
-    iterator.next(); // who cares about department
+      iterator.next(); // who cares about department
 
-    String group = convertAndGetStringCellValue(iterator.next());
-    person.setGroup(group);
+      String group = convertAndGetStringCellValue(iterator.next());
+      person.setGroup(group);
 
-    String genderString = convertAndGetStringCellValue(iterator.next());
-    person.setIsMale(genderString.equalsIgnoreCase("M"));
+      String genderString = convertAndGetStringCellValue(iterator.next());
+      person.setIsMale(genderString.equalsIgnoreCase("M"));
 
-    iterator.next();
-    iterator.next();
-    iterator.next(); // ignore direct and indirect manager, and also the T-Shirt size
+      iterator.next();
+      iterator.next();
+      iterator.next(); // ignore direct and indirect manager, and also the T-Shirt size
 
-    String room = convertAndGetStringCellValue(iterator.next());
-    person.setRoom(room);
+      String room = convertAndGetStringCellValue(iterator.next());
+      person.setRoom(room);
 
-    String hotel = convertAndGetStringCellValue(iterator.next());
-    person.setHotel(hotel);
+      String hotel = convertAndGetStringCellValue(iterator.next());
+      person.setHotel(hotel);
 
-    // Now, skip bus and the coordinator
-    iterator.next();
-    iterator.next();
+      // Now, skip bus and the coordinator
+      iterator.next();
+      iterator.next();
 
-    // This is last column, and maybe they didn't update the phone number for me to parse
-    if (iterator.hasNext()) {
+      // This is last column, and maybe they didn't update the phone number for me to parse
       String phone = convertAndGetStringCellValue(iterator.next());
       person.setPhoneNumber(phone);
+    } catch (Exception ex) {
+      // ignore, we try to get at most data as possible,
+      // at least, we have the person name. That is enough to show on the GUI.
     }
 
     return person;
