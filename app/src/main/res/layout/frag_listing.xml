@@ -11,6 +11,7 @@
       android:layout_marginStart="@dimen/card_margin"
       android:layout_marginEnd="@dimen/card_margin"
       android:id="@+id/statusTextView"
+      android:textAlignment="textEnd"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       tools:text="22 total, 15 checked"

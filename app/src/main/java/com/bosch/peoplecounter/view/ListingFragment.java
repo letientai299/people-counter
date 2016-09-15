@@ -173,13 +173,22 @@ public class ListingFragment extends Fragment
   }
 
   private void updateStatus() {
-    String status = String.format(Locale.ENGLISH, "%d people in total.",
+    String baseFormat =
+        shouldShowSearchStatus() ? " Found %d people." : "%d people in total.";
+    String status = String.format(Locale.ENGLISH, baseFormat,
         peopleListAdapter.getItemCount());
     if (isCountingMode) {
       status += String.format(Locale.ENGLISH, " %d checked.",
           peopleListAdapter.getCheckedItemCount());
     }
     statusTextView.setText(status);
+  }
+
+  private boolean shouldShowSearchStatus() {
+    return searchBar.isSearchEnabled() && !searchBar.searchEdit.getText()
+        .toString()
+        .trim()
+        .isEmpty();
   }
 
   @Override public void onStop() {
@@ -414,7 +423,10 @@ public class ListingFragment extends Fragment
   }
 
   private void filterPeopleList(final String query) {
-    getActivity().runOnUiThread(() -> peopleListAdapter.setFilterQuery(query));
+    getActivity().runOnUiThread(() -> {
+      peopleListAdapter.setFilterQuery(query);
+      updateStatus();
+    });
   }
 }
 
