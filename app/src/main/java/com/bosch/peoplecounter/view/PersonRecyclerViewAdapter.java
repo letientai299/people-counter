@@ -214,4 +214,12 @@ class PersonRecyclerViewAdapter
     Collections.sort(people, comparator);
     updateFilteringPeople();
   }
+
+  int getCheckedItemCount() {
+    int count = 0;
+    for (Person p : getPeopleList()) {
+      if (p.isChecked()) count += 1;
+    }
+    return count;
+  }
 }

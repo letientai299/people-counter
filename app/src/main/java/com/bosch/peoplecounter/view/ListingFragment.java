@@ -35,6 +35,7 @@ import com.bosch.peoplecounter.data.PersonStorage;
 import com.bosch.peoplecounter.data.StorageChangeListener;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import java.util.Comparator;
+import java.util.Locale;
 import javax.inject.Inject;
 import jp.wasabeef.recyclerview.animators.BaseItemAnimator;
 import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
@@ -61,6 +62,12 @@ public class ListingFragment extends Fragment
    * Make the people list auto sorted by person name.
    */
   @BindView(R.id.searchBar) MaterialSearchBarSearchOnTyping searchBar;
+
+  /**
+   * Show the status of the current context.
+   */
+  @BindView(R.id.statusTextView) TextView statusTextView;
+
   @Inject PersonStorage storage;
   private Unbinder unbinder;
   private boolean isCountingMode;
@@ -160,8 +167,19 @@ public class ListingFragment extends Fragment
           peopleListAdapter.setFilterEnable(searchBar.isSearchEnabled());
           peopleListAdapter.setFilterQuery(
               searchBar.searchEdit.getText().toString());
+          updateStatus();
         }))
         .subscribe(p -> peopleListAdapter.add(p)), 600);
+  }
+
+  private void updateStatus() {
+    String status = String.format(Locale.ENGLISH, "%d people in total.",
+        peopleListAdapter.getItemCount());
+    if (isCountingMode) {
+      status += String.format(Locale.ENGLISH, " %d checked.",
+          peopleListAdapter.getCheckedItemCount());
+    }
+    statusTextView.setText(status);
   }
 
   @Override public void onStop() {
@@ -303,23 +321,31 @@ public class ListingFragment extends Fragment
     getActivity().runOnUiThread(() -> {
       if (unbinder != null) {
         peopleListAdapter.add(p);
+        updateStatus();
       }
     });
   }
 
   @Override public void onDelete(final Person p) {
-    getActivity().runOnUiThread(() -> peopleListAdapter.delete(p));
+    getActivity().runOnUiThread(() -> {
+      peopleListAdapter.delete(p);
+      updateStatus();
+    });
   }
 
   @Override public void onClearAll() {
     getActivity().runOnUiThread(() -> {
       storage.removeStorageChangeListener(this);
+      updateStatus();
       Utils.recreateFragment(this);
     });
   }
 
   @Override public void onUpdate(final Person item) {
-    getActivity().runOnUiThread(() -> peopleListAdapter.update(item));
+    getActivity().runOnUiThread(() -> {
+      peopleListAdapter.update(item);
+      updateStatus();
+    });
   }
 
   public boolean getModeFromPref() {
